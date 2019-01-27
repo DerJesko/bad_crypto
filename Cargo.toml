@@ -1,0 +1,13 @@
+[package]
+name = "bad_crypto"
+version = "0.0.1"
+authors = ["Jesko Dujmovic <jeskod+git@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+rand = "0.6.4"
+num-traits = "0.2.6"
+
+[dependencies.num-bigint]
+version = "0.2"
+features = ["rand"]
