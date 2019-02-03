@@ -1,28 +1,11 @@
 use crate::prime;
 use num_bigint::BigUint;
+use num_traits::Zero;
 use rand::prelude::ThreadRng;
 
-pub(crate) trait FiniteGroup {
-    fn modulus(&self) -> &BigUint;
-
-    fn mult(&self, a: &BigUint, b: &BigUint) -> BigUint {
-        (a + b) % self.modulus()
-    }
-
-    fn pow(&self, a: &BigUint, b: &BigUint) -> BigUint {
-        (a * b) % self.modulus()
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct PrimeGroup {
     pub(crate) modulus: BigUint,
-}
-
-impl FiniteGroup for PrimeGroup {
-    fn modulus(&self) -> &BigUint {
-        &self.modulus
-    }
 }
 
 impl PrimeGroup {
@@ -31,20 +14,46 @@ impl PrimeGroup {
             modulus: prime::random_prime(sec_param, rng),
         }
     }
-    pub(crate) fn exp_inverse(&self, a: &BigUint) -> BigUint {
-        self.modulus() - a
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct PrimeGroupElement {
+    number: BigUint,
+    group: Rc<PrimeGroup>
+}
+
+impl PrimeGroupElement {
+    pub(crate) fn one(g: &PrimeGroup) -> Self {
+        PrimeGroupElement {
+            number: Zero::zero(),
+            group: g.clone()
+        }
+    }
+
+    pub(crate) fn mult(&self, b: &Self) -> Self {
+        if self.group != b.group {
+            panic!("multiplying {:?} and {:?} did't work they have differnt groups", self, b);
+        }
+        PrimeGroupElement {
+            number: &(&self.number + &b.number) % &self.group.modulus,
+            group: self.group.clone()
+        }
+    }
+
+    pub(crate) fn pow(&self, b: &Self) -> Self {
+        if self.group != b.group {
+            panic!("raising {:?} to the power of {:?} did't work they have differnt groups", self, b);
+        }
+        PrimeGroupElement {
+            number: &(&self.number * &b.number) % &self.group.modulus,
+            group: self.group.clone()
+        }
     }
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct DoublePrimeGroup {
     pub(crate) modulus: BigUint,
-}
-
-impl FiniteGroup for DoublePrimeGroup {
-    fn modulus(&self) -> &BigUint {
-        &self.modulus
-    }
 }
 
 impl DoublePrimeGroup {
