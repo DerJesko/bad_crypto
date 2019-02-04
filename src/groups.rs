@@ -1,56 +1,74 @@
 use crate::prime;
-use num_bigint::BigUint;
+use crate::TWO;
+use num_bigint::{BigUint, RandBigInt};
 use num_traits::Zero;
 use rand::prelude::ThreadRng;
+use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct PrimeGroup {
-    pub(crate) modulus: BigUint,
+pub struct PrimeGroup {
+    pub modulus: BigUint,
 }
 
 impl PrimeGroup {
-    pub(crate) fn rand_new(sec_param: usize, rng: &mut ThreadRng) -> Self {
+    pub fn rand_new(sec_param: usize, rng: &mut ThreadRng) -> Self {
         PrimeGroup {
             modulus: prime::random_prime(sec_param, rng),
         }
     }
+
+    pub fn exp_inverse(&self, x: &BigUint) -> BigUint {
+        &self.modulus - &(x % &self.modulus)
+    }
 }
 
-#[derive(Debug, Clone)]
-pub(crate) struct PrimeGroupElement {
+#[derive(Debug, Clone, PartialEq)]
+pub struct PrimeGroupElement {
     number: BigUint,
-    group: Rc<PrimeGroup>
+    pub group: Rc<PrimeGroup>,
 }
 
 impl PrimeGroupElement {
-    pub(crate) fn one(g: &PrimeGroup) -> Self {
+    pub fn rand_generator(group: Rc<PrimeGroup>, rng: &mut ThreadRng) -> PrimeGroupElement {
+        PrimeGroupElement {
+            number: rng.gen_biguint_range(&TWO(), &group.modulus),
+            group: group.clone(),
+        }
+    }
+    pub fn new(number: BigUint, group: Rc<PrimeGroup>) -> PrimeGroupElement {
+        PrimeGroupElement {
+            number: number,
+            group: group.clone(),
+        }
+    }
+    pub fn one(g: &Rc<PrimeGroup>) -> Self {
         PrimeGroupElement {
             number: Zero::zero(),
-            group: g.clone()
+            group: g.clone(),
         }
     }
 
-    pub(crate) fn mult(&self, b: &Self) -> Self {
+    pub fn mult(&self, b: &Self) -> Self {
         if self.group != b.group {
-            panic!("multiplying {:?} and {:?} did't work they have differnt groups", self, b);
+            panic!(
+                "multiplying {:?} and {:?} did't work they have differnt groups",
+                self, b
+            );
         }
         PrimeGroupElement {
             number: &(&self.number + &b.number) % &self.group.modulus,
-            group: self.group.clone()
+            group: self.group.clone(),
         }
     }
 
-    pub(crate) fn pow(&self, b: &Self) -> Self {
-        if self.group != b.group {
-            panic!("raising {:?} to the power of {:?} did't work they have differnt groups", self, b);
-        }
+    pub fn pow(&self, b: &BigUint) -> Self {
         PrimeGroupElement {
-            number: &(&self.number * &b.number) % &self.group.modulus,
-            group: self.group.clone()
+            number: &(&self.number * b) % &self.group.modulus,
+            group: self.group.clone(),
         }
     }
 }
-
+/*
 #[derive(Debug, Clone)]
 pub(crate) struct DoublePrimeGroup {
     pub(crate) modulus: BigUint,
@@ -63,3 +81,4 @@ impl DoublePrimeGroup {
         (DoublePrimeGroup { modulus: &p * &q }, p, q)
     }
 }
+*/

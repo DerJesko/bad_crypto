@@ -1,9 +1,9 @@
+extern crate ndarray;
 extern crate num_bigint;
 extern crate num_traits;
 extern crate rand;
-extern crate ndarray;
 
-mod bgn;
+//mod bgn;
 mod dummy_nikz;
 pub mod elgamal;
 mod groups;
