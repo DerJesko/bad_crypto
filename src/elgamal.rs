@@ -1,5 +1,5 @@
 use crate::groups::{PrimeGroup, PrimeGroupElement};
-use crate::{traits, TWO};
+use crate::traits;
 use num_bigint::{BigUint, RandBigInt};
 use num_traits::One;
 use rand::prelude::ThreadRng;
@@ -21,8 +21,7 @@ pub struct Ciphertext(PrimeGroupElement, PrimeGroupElement);
 
 #[derive(Debug, Clone)]
 pub struct PublicKey {
-    pub group: PrimeGroup,
-    generator_g: PrimeGroupElement,
+    pub generator_g: PrimeGroupElement,
     generator_h: PrimeGroupElement,
 }
 
@@ -32,9 +31,11 @@ pub struct SecretKey {
     exponent: BigUint,
 }
 
+pub struct Function();
+
 impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for ElGamal {
     fn encrypt(pub_key: &PublicKey, message: &Message, rng: &mut ThreadRng) -> Ciphertext {
-        let group = &pub_key.group;
+        let group = &pub_key.generator_g.group;
         let exponent = rng.gen_biguint_range(&One::one(), &group.modulus);
         let Message(m) = message;
         Ciphertext(
@@ -48,7 +49,7 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for ElGam
         _rng: &mut ThreadRng,
     ) -> Option<Message> {
         let Ciphertext(c1, c2) = cipher_text;
-        let group = &sec_key.pk.group;
+        let group = &sec_key.pk.generator_g.group;
         Some(Message(
             (c1.pow(&group.exp_inverse(&sec_key.exponent))).mult(&c2),
         ))
@@ -60,10 +61,23 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for ElGam
         let exponent = rng.gen_biguint_range(&One::one(), &group.modulus);
         let generator_h = generator_g.pow(&exponent);
         let pk = PublicKey {
-            group,
             generator_g,
             generator_h,
         };
         (pk.clone(), SecretKey { pk, exponent })
+    }
+}
+
+impl traits::HomomorphEncryption<PublicKey, SecretKey, Message, Ciphertext, Function> for ElGamal {
+    // let m1 and and m2 be messages (group elements) this function can evaluate m1*m2
+    fn eval(pubk: &PublicKey, _: Function, c: Vec<Ciphertext>, _: &mut ThreadRng) -> Ciphertext {
+        let mut r1 = PrimeGroupElement::one(&pubk.generator_g.group);
+        let mut r2 = PrimeGroupElement::one(&pubk.generator_g.group);
+        for i in c {
+            let Ciphertext(c1, c2) = i;
+            r1 = r1.mult(&c1);
+            r2 = r2.mult(&c2);
+        }
+        Ciphertext(r1, r2)
     }
 }

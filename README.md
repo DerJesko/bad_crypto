@@ -5,12 +5,12 @@ Don't use it. Only a fool would use it. Don't even think about using it. It is i
 
 ToDo list:
 
-* [ ] Elgamal Public Key Encryption
-* [ ] Elgamal Homomorphic Public Key Encryption
+* [x] Elgamal Public Key Encryption
+* [x] Elgamal Homomorphic Public Key Encryption
 * [ ] Diffie-Hellman Key Exchange
 * [ ] RSA Public Key Encryption
 * [ ] Rabin Public Key Encryption
-* [ ] Naor-Yung Public Key Encryption
+* [x] (kind of: has no working NIZK yet) Naor-Yung Public Key Encryption
 * [ ] Regev Public Key Encrytion
 * [ ] Dolev-Dwork-Naor Construction
 * [ ] From Tag-Based Encryption to IND-CCA2 Encryption
