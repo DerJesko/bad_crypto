@@ -23,7 +23,7 @@ pub fn random_prime(sec_param: usize, rng: &mut ThreadRng) -> BigUint {
     res
 }
 
-fn prime_eh(n: &BigUint, amount_checks: usize, rng: &mut ThreadRng) -> bool {
+pub fn prime_eh(n: &BigUint, amount_checks: usize, rng: &mut ThreadRng) -> bool {
     let mut prime_candidate = true;
     for j in PRIME2000.iter() {
         if Zero::is_zero(&(n % j)) {

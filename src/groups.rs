@@ -1,7 +1,7 @@
 use crate::prime;
 use crate::TWO;
 use num_bigint::{BigUint, RandBigInt};
-use num_traits::Zero;
+use num_traits::One;
 use rand::prelude::ThreadRng;
 use std::rc::Rc;
 
@@ -16,14 +16,17 @@ impl PrimeGroup {
     pub fn rand_new(sec_param: usize, rng: &mut ThreadRng) -> Self {
         loop {
             let p = prime::random_prime(sec_param, rng);
-            for i in [2,3,5,7]{
-            if prime::prime_eh(&(p * i)+1) {
-                return PrimeGroup {
-                    modulus: p * i +1,
-                    big_prime: p,
-                    small_prime: i
+            let one: BigUint = One::one();
+            let small_prime_candidates = [2, 3, 5, 7];
+            for i in &small_prime_candidates {
+                if prime::prime_eh(&(&(&p * i) + &one), sec_param, rng) {
+                    return PrimeGroup {
+                        modulus: &p * i + one,
+                        big_prime: p,
+                        small_prime: *i,
+                    };
                 }
-            }}
+            }
         }
     }
 
@@ -40,19 +43,20 @@ pub struct PrimeGroupElement {
 
 impl PrimeGroupElement {
     pub fn rand_generator(group: Rc<PrimeGroup>, rng: &mut ThreadRng) -> PrimeGroupElement {
-        let r = rng.gen_biguint_range(&TWO, &group.big_prime);
+        let r = rng.gen_biguint_range(&TWO(), &group.big_prime);
         Self::new(r, group)
     }
 
     pub fn new(number: BigUint, group: Rc<PrimeGroup>) -> PrimeGroupElement {
         PrimeGroupElement {
-            number: number*g.small_prime,
+            number: number * group.small_prime,
             group: group.clone(),
         }
     }
     pub fn one(g: &Rc<PrimeGroup>) -> Self {
+        let one: BigUint = One::one();
         PrimeGroupElement {
-            number: One::one()*g.small_prime,
+            number: one * g.small_prime,
             group: g.clone(),
         }
     }
@@ -72,7 +76,7 @@ impl PrimeGroupElement {
 
     pub fn pow(&self, b: &BigUint) -> Self {
         PrimeGroupElement {
-            number: self.modpow(b, &group.modulus),
+            number: self.number.modpow(b, &self.group.modulus),
             group: self.group.clone(),
         }
     }
