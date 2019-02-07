@@ -1,6 +1,6 @@
 use crate::prime;
 use crate::TWO;
-use num_bigint::{BigUint, RandBigInt};
+use num_bigint::{BigUint, RandBigInt, ToBigUint};
 use num_traits::One;
 use rand::prelude::ThreadRng;
 use std::rc::Rc;
@@ -8,8 +8,8 @@ use std::rc::Rc;
 #[derive(Debug, Clone, PartialEq)]
 pub struct PrimeGroup {
     pub modulus: BigUint,
-    pub small_prime: u8,
     pub big_prime: BigUint,
+    pub generator: BigUint,
 }
 
 impl PrimeGroup {
@@ -17,15 +17,12 @@ impl PrimeGroup {
         loop {
             let p = prime::random_prime(sec_param, rng);
             let one: BigUint = One::one();
-            let small_prime_candidates = [2, 3, 5, 7];
-            for i in &small_prime_candidates {
-                if prime::prime_eh(&(&(&p * i) + &one), sec_param, rng) {
-                    return PrimeGroup {
-                        modulus: &p * i + one,
-                        big_prime: p,
-                        small_prime: *i,
-                    };
-                }
+            if prime::prime_eh(&(&(&p * &(2 as u8)) + &one), sec_param, rng) {
+                return PrimeGroup {
+                    modulus: &p * &(2 as u8) + one,
+                    big_prime: p,
+                    generator: (3 as u8).to_biguint().unwrap(),
+                };
             }
         }
     }
@@ -42,21 +39,21 @@ pub struct PrimeGroupElement {
 }
 
 impl PrimeGroupElement {
-    pub fn rand_generator(group: Rc<PrimeGroup>, rng: &mut ThreadRng) -> PrimeGroupElement {
+    pub fn rand_generator(group: &Rc<PrimeGroup>, rng: &mut ThreadRng) -> PrimeGroupElement {
         let r = rng.gen_biguint_range(&TWO(), &group.big_prime);
-        Self::new(r, group)
+        Self::new(r, &group)
     }
 
-    pub fn new(number: BigUint, group: Rc<PrimeGroup>) -> PrimeGroupElement {
+    pub fn new(number: BigUint, group: &Rc<PrimeGroup>) -> PrimeGroupElement {
         PrimeGroupElement {
-            number: number * group.small_prime,
+            number: group.generator.modpow(&number, &group.modulus),
             group: group.clone(),
         }
     }
-    pub fn one(g: &Rc<PrimeGroup>) -> Self {
+    pub fn one(g: &Rc<PrimeGroup>) -> PrimeGroupElement {
         let one: BigUint = One::one();
         PrimeGroupElement {
-            number: one * g.small_prime,
+            number: one,
             group: g.clone(),
         }
     }

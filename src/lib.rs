@@ -8,10 +8,10 @@ mod dummy_nikz;
 pub mod elgamal;
 mod fields;
 mod groups;
-mod matrix;
 mod naor_yung;
 mod prime;
 mod prime2000;
+mod regev;
 mod traits;
 
 #[cfg(test)]

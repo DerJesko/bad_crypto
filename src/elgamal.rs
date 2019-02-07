@@ -56,8 +56,8 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for ElGam
     }
 
     fn key_generation(sec_param: usize, rng: &mut ThreadRng) -> (PublicKey, SecretKey) {
-        let group = PrimeGroup::rand_new(sec_param, rng);
-        let generator_g = PrimeGroupElement::rand_generator(Rc::new(group.clone()), rng);
+        let group = Rc::new(PrimeGroup::rand_new(sec_param, rng));
+        let generator_g = PrimeGroupElement::rand_generator(&group, rng);
         let exponent = rng.gen_biguint_range(&One::one(), &group.modulus);
         let generator_h = generator_g.pow(&exponent);
         let pk = PublicKey {

@@ -17,10 +17,9 @@ pub fn random_prime(sec_param: usize, rng: &mut ThreadRng) -> BigUint {
     loop {
         res = rng.gen_biguint(n) * &two + &min_number; // uniformly choose a odd number which is >17391
         if prime_eh(&res, n, rng) {
-            break;
+            return res;
         }
     }
-    res
 }
 
 pub fn prime_eh(n: &BigUint, amount_checks: usize, rng: &mut ThreadRng) -> bool {
