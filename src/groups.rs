@@ -3,6 +3,7 @@ use crate::TWO;
 use num_bigint::{BigUint, RandBigInt, ToBigUint};
 use num_traits::One;
 use rand::prelude::ThreadRng;
+use std::ops::Mul;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -38,6 +39,22 @@ pub struct PrimeGroupElement {
     pub group: Rc<PrimeGroup>,
 }
 
+impl Mul for &PrimeGroupElement {
+    type Output = PrimeGroupElement;
+    fn mul(self, b: Self) -> PrimeGroupElement {
+        if self.group != b.group {
+            panic!(
+                "multiplying {:?} and {:?} did't work they have differnt groups",
+                self, b
+            );
+        }
+        PrimeGroupElement {
+            number: &(&self.number * &b.number) % &self.group.modulus,
+            group: self.group.clone(),
+        }
+    }
+}
+
 impl PrimeGroupElement {
     pub fn rand_generator(group: &Rc<PrimeGroup>, rng: &mut ThreadRng) -> PrimeGroupElement {
         let r = rng.gen_biguint_range(&TWO(), &group.big_prime);
@@ -55,19 +72,6 @@ impl PrimeGroupElement {
         PrimeGroupElement {
             number: one,
             group: g.clone(),
-        }
-    }
-
-    pub fn mult(&self, b: &Self) -> Self {
-        if self.group != b.group {
-            panic!(
-                "multiplying {:?} and {:?} did't work they have differnt groups",
-                self, b
-            );
-        }
-        PrimeGroupElement {
-            number: &(&self.number * &b.number) % &self.group.modulus,
-            group: self.group.clone(),
         }
     }
 

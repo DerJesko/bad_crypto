@@ -1,5 +1,5 @@
 use crate::prime;
-use num_bigint::BigUint;
+use num_bigint::{BigUint, RandBigInt};
 use num_traits::{One, Zero};
 use rand::prelude::ThreadRng;
 use std::ops::{Add, Mul};
@@ -57,7 +57,16 @@ impl Add for FiniteFieldElement {
     type Output = FiniteFieldElement;
 
     fn add(self, b: Self) -> FiniteFieldElement {
-        &self + &b
+        if self.field != b.field && !(b.field.is_zero()) {
+            panic!(
+                "adding {:?} and {:?} did't work they have differnt fields",
+                self, b
+            );
+        }
+        FiniteFieldElement {
+            number: &(&self.number + &b.number) % &self.field.order,
+            field: self.field,
+        }
     }
 }
 
@@ -95,7 +104,16 @@ impl Mul for FiniteFieldElement {
     type Output = FiniteFieldElement;
 
     fn mul(self, b: Self) -> FiniteFieldElement {
-        &self + &b
+        if self.field != b.field && !(b.field.is_zero()) {
+            panic!(
+                "multiplying {:?} and {:?} did't work they have differnt fields",
+                self, b
+            );
+        }
+        FiniteFieldElement {
+            number: &(&self.number * &b.number) % &self.field.order,
+            field: self.field,
+        }
     }
 }
 
@@ -113,6 +131,18 @@ impl One for FiniteFieldElement {
 }
 
 impl FiniteFieldElement {
+    pub fn rand_new(field: &Rc<FiniteField>, rng: &mut ThreadRng) -> FiniteFieldElement {
+        let r = rng.gen_biguint_range(&Zero::zero(), &field.order);
+        Self::new(r, &field)
+    }
+
+    pub fn new(number: BigUint, field: &Rc<FiniteField>) -> FiniteFieldElement {
+        FiniteFieldElement {
+            number: &number % &field.order,
+            field: field.clone(),
+        }
+    }
+
     pub fn pow(&self, b: &BigUint) -> Self {
         FiniteFieldElement {
             number: self.number.modpow(b, &self.field.order),

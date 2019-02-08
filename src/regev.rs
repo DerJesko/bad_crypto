@@ -1,10 +1,10 @@
-use crate::fields::FiniteFieldElement;
+use crate::fields::{FiniteField, FiniteFieldElement};
 use crate::traits;
-use ndarray::{Array, Array2};
+use ndarray::{Array, Array2, ShapeBuilder};
 use num_bigint::{BigUint, RandBigInt};
 use rand::distributions::StandardNormal;
 use rand::prelude::*;
-use rand::SeedableRng;
+use std::rc::Rc;
 
 const M: usize = 25;
 const N: usize = 5;
@@ -37,7 +37,8 @@ pub struct SecretKey(ndarray::Array2<FiniteFieldElement>);
 
 impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev {
     fn key_generation(sec_param: usize, rng: &mut ThreadRng) -> (PublicKey, SecretKey) {
-        let mut A = Array::zeros((N, M));
+        let field = Rc::new(FiniteField::rand_new(sec_param, rng));
+        let A = Array::from_shape_fn((M, N).f(), |_| FiniteFieldElement::rand_new(&field, rng));
         SecretKey(A);
         panic!();
     }

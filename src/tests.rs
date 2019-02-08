@@ -29,7 +29,7 @@ fn gen_group() {
     let gminusx = generator.pow(&minus_x);
     println!("-x: {:?}", minus_x);
 
-    assert_eq!(PrimeGroupElement::one(&generator.group), gx.mult(&gminusx));
+    assert_eq!(PrimeGroupElement::one(&generator.group), &gx * &gminusx);
 }
 #[test]
 fn test_elgamal() {

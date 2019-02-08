@@ -40,7 +40,7 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for ElGam
         let Message(m) = message;
         Ciphertext(
             pub_key.generator_g.pow(&exponent),
-            (pub_key.generator_h.pow(&exponent)).mult(m),
+            &(pub_key.generator_h.pow(&exponent)) * m,
         )
     }
     fn decrypt(
@@ -51,7 +51,7 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for ElGam
         let Ciphertext(c1, c2) = cipher_text;
         let group = &sec_key.pk.generator_g.group;
         Some(Message(
-            (c1.pow(&group.exp_inverse(&sec_key.exponent))).mult(&c2),
+            &(c1.pow(&group.exp_inverse(&sec_key.exponent))) * &c2,
         ))
     }
 
@@ -75,8 +75,8 @@ impl traits::HomomorphEncryption<PublicKey, SecretKey, Message, Ciphertext, Func
         let mut r2 = PrimeGroupElement::one(&pubk.generator_g.group);
         for i in c {
             let Ciphertext(c1, c2) = i;
-            r1 = r1.mult(&c1);
-            r2 = r2.mult(&c2);
+            r1 = &r1 * &c1;
+            r2 = &r2 * &c2;
         }
         Ciphertext(r1, r2)
     }
