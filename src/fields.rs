@@ -2,11 +2,24 @@ use crate::prime;
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
 use rand::prelude::ThreadRng;
+use std::ops::{Add, Mul};
 use std::rc::Rc;
 
 #[derive(PartialEq, Debug)]
 pub struct FiniteField {
     order: BigUint,
+}
+
+impl FiniteField {
+    fn is_zero(&self) -> bool {
+        self.order.is_zero()
+    }
+
+    fn zero() -> Self {
+        FiniteField {
+            order: BigUint::zero(),
+        }
+    }
 }
 
 impl FiniteField {
@@ -17,29 +30,17 @@ impl FiniteField {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FiniteFieldElement {
     number: BigUint,
     field: Rc<FiniteField>,
 }
 
-impl FiniteFieldElement {
-    pub fn zero(g: &Rc<FiniteField>) -> Self {
-        FiniteFieldElement {
-            number: Zero::zero(),
-            field: g.clone(),
-        }
-    }
+impl Add for &FiniteFieldElement {
+    type Output = FiniteFieldElement;
 
-    pub fn one(g: &Rc<FiniteField>) -> Self {
-        FiniteFieldElement {
-            number: One::one(),
-            field: g.clone(),
-        }
-    }
-
-    pub fn add(&self, b: &Self) -> Self {
-        if self.field != b.field {
+    fn add(self, b: Self) -> FiniteFieldElement {
+        if self.field != b.field && !(b.field.is_zero()) {
             panic!(
                 "adding {:?} and {:?} did't work they have differnt fields",
                 self, b
@@ -50,9 +51,34 @@ impl FiniteFieldElement {
             field: self.field.clone(),
         }
     }
+}
 
-    pub fn mult(&self, b: &Self) -> Self {
-        if self.field != b.field {
+impl Add for FiniteFieldElement {
+    type Output = FiniteFieldElement;
+
+    fn add(self, b: Self) -> FiniteFieldElement {
+        &self + &b
+    }
+}
+
+impl Zero for FiniteFieldElement {
+    fn is_zero(&self) -> bool {
+        self.number.is_zero()
+    }
+
+    fn zero() -> FiniteFieldElement {
+        FiniteFieldElement {
+            number: Zero::zero(),
+            field: Rc::new(FiniteField::zero()),
+        }
+    }
+}
+
+impl Mul for &FiniteFieldElement {
+    type Output = FiniteFieldElement;
+
+    fn mul(self, b: Self) -> FiniteFieldElement {
+        if self.field != b.field && !(b.field.is_zero()) {
             panic!(
                 "multiplying {:?} and {:?} did't work they have differnt fields",
                 self, b
@@ -63,16 +89,33 @@ impl FiniteFieldElement {
             field: self.field.clone(),
         }
     }
+}
 
-    pub fn pow(&self, b: &Self) -> Self {
-        if self.field != b.field {
-            panic!(
-                "raising {:?} to the power of {:?} did't work they have differnt fields",
-                self, b
-            );
-        }
+impl Mul for FiniteFieldElement {
+    type Output = FiniteFieldElement;
+
+    fn mul(self, b: Self) -> FiniteFieldElement {
+        &self + &b
+    }
+}
+
+impl One for FiniteFieldElement {
+    fn is_one(&self) -> bool {
+        self.number.is_one()
+    }
+
+    fn one() -> FiniteFieldElement {
         FiniteFieldElement {
-            number: self.number.modpow(&b.number, &self.field.order),
+            number: One::one(),
+            field: Rc::new(FiniteField::zero()),
+        }
+    }
+}
+
+impl FiniteFieldElement {
+    pub fn pow(&self, b: &BigUint) -> Self {
+        FiniteFieldElement {
+            number: self.number.modpow(b, &self.field.order),
             field: self.field.clone(),
         }
     }

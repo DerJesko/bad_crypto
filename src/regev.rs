@@ -1,6 +1,6 @@
 use crate::fields::FiniteFieldElement;
 use crate::traits;
-use ndarray::Array2;
+use ndarray::{Array, Array2};
 use num_bigint::{BigUint, RandBigInt};
 use rand::distributions::StandardNormal;
 use rand::prelude::*;
@@ -37,6 +37,8 @@ pub struct SecretKey(ndarray::Array2<FiniteFieldElement>);
 
 impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev {
     fn key_generation(sec_param: usize, rng: &mut ThreadRng) -> (PublicKey, SecretKey) {
+        let mut A = Array::zeros((N, M));
+        SecretKey(A);
         panic!();
     }
     fn encrypt(pub_key: &PublicKey, message: &Message, rng: &mut ThreadRng) -> Ciphertext {
