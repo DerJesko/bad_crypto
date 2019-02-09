@@ -1,5 +1,6 @@
 use crate::fields::{FiniteField, FiniteFieldElement};
 use crate::traits;
+use bigdecimal::BigDecimal;
 use ndarray::{Array, Array2, ShapeBuilder};
 use num_bigint::{BigUint, RandBigInt};
 use rand::distributions::StandardNormal;
@@ -10,11 +11,11 @@ const M: usize = 25;
 const N: usize = 5;
 const B: f64 = 2.;
 
-fn chi(rng: &mut ThreadRng) -> f64 {
+fn chi(rng: &mut ThreadRng) -> BigDecimal {
     loop {
         let r = rng.sample(StandardNormal);
         if r.abs() < B {
-            return r;
+            return BigDecimal::from(r);
         }
     }
 }
@@ -39,8 +40,10 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev
     fn key_generation(sec_param: usize, rng: &mut ThreadRng) -> (PublicKey, SecretKey) {
         let field = Rc::new(FiniteField::rand_new(sec_param, rng));
         let A = Array::from_shape_fn((M, N).f(), |_| FiniteFieldElement::rand_new(&field, rng));
-        SecretKey(A);
-        panic!();
+        let s = Array::from_shape_fn((1, N).f(), |_| FiniteFieldElement::rand_new(&field, rng));
+        let e = Array::from_shape_fn((1, M).f(), |_| FiniteFieldElement::new(chi(rng), &field));
+        let b = &A * &s + e;
+        (PublicKey { A: A, b: b }, SecretKey(s))
     }
     fn encrypt(pub_key: &PublicKey, message: &Message, rng: &mut ThreadRng) -> Ciphertext {
         panic!();

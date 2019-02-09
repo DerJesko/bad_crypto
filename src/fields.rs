@@ -1,5 +1,7 @@
 use crate::prime;
-use num_bigint::{BigUint, RandBigInt};
+use bigdecimal::BigDecimal;
+use num_bigint::{BigInt, BigUint, RandBigInt, ToBigInt};
+use num_integer::Integer;
 use num_traits::{One, Zero};
 use rand::prelude::ThreadRng;
 use std::ops::{Add, Mul};
@@ -7,7 +9,7 @@ use std::rc::Rc;
 
 #[derive(PartialEq, Debug)]
 pub struct FiniteField {
-    order: BigUint,
+    order: BigDecimal,
 }
 
 impl FiniteField {
@@ -17,7 +19,7 @@ impl FiniteField {
 
     fn zero() -> Self {
         FiniteField {
-            order: BigUint::zero(),
+            order: BigDecimal::zero(),
         }
     }
 }
@@ -25,14 +27,14 @@ impl FiniteField {
 impl FiniteField {
     pub fn rand_new(sec_param: usize, rng: &mut ThreadRng) -> Self {
         FiniteField {
-            order: prime::random_prime(sec_param, rng),
+            order: BigDecimal::from((prime::random_prime(sec_param, rng).to_bigint().unwrap(), 0)),
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct FiniteFieldElement {
-    number: BigUint,
+    number: BigDecimal,
     field: Rc<FiniteField>,
 }
 
@@ -132,21 +134,14 @@ impl One for FiniteFieldElement {
 
 impl FiniteFieldElement {
     pub fn rand_new(field: &Rc<FiniteField>, rng: &mut ThreadRng) -> FiniteFieldElement {
-        let r = rng.gen_biguint_range(&Zero::zero(), &field.order);
-        Self::new(r, &field)
+        let r = rng.gen_bigint_range(&Zero::zero(), &field.order.to_bigint().unwrap());
+        Self::new(BigDecimal::from((r, 0)), &field)
     }
 
-    pub fn new(number: BigUint, field: &Rc<FiniteField>) -> FiniteFieldElement {
+    pub fn new(number: BigDecimal, field: &Rc<FiniteField>) -> FiniteFieldElement {
         FiniteFieldElement {
             number: &number % &field.order,
             field: field.clone(),
-        }
-    }
-
-    pub fn pow(&self, b: &BigUint) -> Self {
-        FiniteFieldElement {
-            number: self.number.modpow(b, &self.field.order),
-            field: self.field.clone(),
         }
     }
 }
