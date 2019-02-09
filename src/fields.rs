@@ -4,12 +4,12 @@ use num_bigint::{BigInt, BigUint, RandBigInt, ToBigInt};
 use num_integer::Integer;
 use num_traits::{One, Zero};
 use rand::prelude::ThreadRng;
-use std::ops::{Add, Mul};
+use std::ops::{Add, Mul, Sub};
 use std::rc::Rc;
 
 #[derive(PartialEq, Debug)]
 pub struct FiniteField {
-    order: BigDecimal,
+    pub order: BigDecimal,
 }
 
 impl FiniteField {
@@ -34,7 +34,7 @@ impl FiniteField {
 
 #[derive(Debug, Clone)]
 pub struct FiniteFieldElement {
-    number: BigDecimal,
+    pub number: BigDecimal,
     field: Rc<FiniteField>,
 }
 
@@ -67,6 +67,40 @@ impl Add for FiniteFieldElement {
         }
         FiniteFieldElement {
             number: &(&self.number + &b.number) % &self.field.order,
+            field: self.field,
+        }
+    }
+}
+
+impl Sub for &FiniteFieldElement {
+    type Output = FiniteFieldElement;
+
+    fn sub(self, b: Self) -> FiniteFieldElement {
+        if self.field != b.field && !(b.field.is_zero()) {
+            panic!(
+                "substracting {:?} from {:?} did't work they have differnt fields",
+                b, self
+            );
+        }
+        FiniteFieldElement {
+            number: &(&self.number - &b.number) % &self.field.order,
+            field: self.field.clone(),
+        }
+    }
+}
+
+impl Sub for FiniteFieldElement {
+    type Output = FiniteFieldElement;
+
+    fn sub(self, b: Self) -> FiniteFieldElement {
+        if self.field != b.field && !(b.field.is_zero()) {
+            panic!(
+                "substracting {:?} from {:?} did't work they have differnt fields",
+                b, self
+            );
+        }
+        FiniteFieldElement {
+            number: &(&self.number - &b.number) % &self.field.order,
             field: self.field,
         }
     }

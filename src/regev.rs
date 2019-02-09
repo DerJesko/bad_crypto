@@ -2,7 +2,6 @@ use crate::fields::{FiniteField, FiniteFieldElement};
 use crate::traits;
 use bigdecimal::BigDecimal;
 use ndarray::{Array, Array2, ShapeBuilder};
-use num_bigint::{BigUint, RandBigInt};
 use rand::distributions::StandardNormal;
 use rand::prelude::*;
 use std::rc::Rc;
@@ -22,37 +21,67 @@ fn chi(rng: &mut ThreadRng) -> BigDecimal {
 
 pub struct Regev();
 
+#[allow(non_snake_case)]
+#[derive(Clone)]
 pub struct PublicKey {
-    A: ndarray::Array2<FiniteFieldElement>,
-    b: ndarray::Array2<FiniteFieldElement>,
+    field: Rc<FiniteField>,
+    A: Array2<FiniteFieldElement>,
+    b: Array2<FiniteFieldElement>,
 }
 
-pub struct Ciphertext(
-    ndarray::Array2<FiniteFieldElement>,
-    ndarray::Array2<FiniteFieldElement>,
-);
+pub struct Ciphertext(Array2<FiniteFieldElement>, Array2<FiniteFieldElement>);
 
 pub struct Message(bool);
 
-pub struct SecretKey(ndarray::Array2<FiniteFieldElement>);
+pub struct SecretKey(Array2<FiniteFieldElement>, PublicKey);
 
 impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev {
     fn key_generation(sec_param: usize, rng: &mut ThreadRng) -> (PublicKey, SecretKey) {
         let field = Rc::new(FiniteField::rand_new(sec_param, rng));
+        #[allow(non_snake_case)]
         let A = Array::from_shape_fn((M, N).f(), |_| FiniteFieldElement::rand_new(&field, rng));
         let s = Array::from_shape_fn((1, N).f(), |_| FiniteFieldElement::rand_new(&field, rng));
         let e = Array::from_shape_fn((1, M).f(), |_| FiniteFieldElement::new(chi(rng), &field));
         let b = &A * &s + e;
-        (PublicKey { A: A, b: b }, SecretKey(s))
+        let pk = PublicKey {
+            field: field,
+            A: A,
+            b: b,
+        };
+        (pk.clone(), SecretKey(s, pk))
     }
     fn encrypt(pub_key: &PublicKey, message: &Message, rng: &mut ThreadRng) -> Ciphertext {
-        panic!();
+        let x = Array::from_shape_fn((M, 1).f(), |_| {
+            FiniteFieldElement::new(
+                BigDecimal::from({
+                    if rng.gen() {
+                        1
+                    } else {
+                        0
+                    }
+                }),
+                &pub_key.field,
+            )
+        });
+        Ciphertext(
+            &x * &pub_key.A,
+            x * &pub_key.b
+                + Array::from_shape_fn((1, 1).f(), |_| {
+                    FiniteFieldElement::new(
+                        &pub_key.field.order / 2 * BigDecimal::from(message.0 as u8),
+                        &pub_key.field,
+                    )
+                }),
+        )
     }
     fn decrypt(
         sec_key: &SecretKey,
         cipher_text: &Ciphertext,
-        rng: &mut ThreadRng,
+        _: &mut ThreadRng,
     ) -> Option<Message> {
-        panic!();
+        let Ciphertext(c1, c2) = cipher_text;
+        let SecretKey(s, pk) = sec_key;
+        let z: BigDecimal = &(c1 - &(s * c2))[[0, 0]].number - &pk.field.order / 2;
+        Some(Message(!(z.abs() < &pk.field.order / 4)))
     }
 }
