@@ -1,19 +1,16 @@
 use crate::fields::FiniteFieldElement;
-use ndarray::Array2;
-use num_bigint::{BigUint, RandBigInt};
+use ndarray::{Array, Array2, ShapeBuilder};
+use num_traits::Zero;
 
-pub struct Matrix(pub Array2<FiniteFieldElement>);
-
-impl Matrix {
-    pub fn add(&self, b: &Matrix) -> Matrix {
-        let Matrix(x) = self;
-        let Matrix(y) = b;
-        //assert!(x.len_of() == y.len_of());
-        //assert!(x.len_of() == y.len_of());
-        panic!();
-    }
-
-    pub fn mult(&self, b: &Matrix) -> Matrix {
-        panic!();
-    }
+pub fn dot(
+    a: &Array2<FiniteFieldElement>,
+    b: &Array2<FiniteFieldElement>,
+) -> Array2<FiniteFieldElement> {
+    Array::from_shape_fn((a.shape()[0], b.shape()[1]).f(), |(i, j)| {
+        let mut res = Zero::zero();
+        for l in 0..a.shape()[1] {
+            res = res + &a[[i, l]] * &b[[l, j]];
+        }
+        res
+    })
 }

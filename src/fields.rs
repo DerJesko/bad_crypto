@@ -1,52 +1,92 @@
 use crate::prime;
 use bigdecimal::BigDecimal;
-use num_bigint::{BigInt, BigUint, RandBigInt, ToBigInt};
-use num_integer::Integer;
+use num_bigint::{RandBigInt, ToBigInt};
 use num_traits::{One, Zero};
 use rand::prelude::ThreadRng;
+use std::fmt;
 use std::ops::{Add, Mul, Sub};
 use std::rc::Rc;
 
-#[derive(PartialEq, Debug)]
-pub struct FiniteField {
+#[derive(PartialEq)]
+pub struct Field {
     pub order: BigDecimal,
 }
 
-impl FiniteField {
+impl fmt::Debug for Field {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Field {{ order: {} }}", self.order)
+    }
+}
+
+impl Field {
     fn is_zero(&self) -> bool {
         self.order.is_zero()
     }
 
     fn zero() -> Self {
-        FiniteField {
+        Field {
             order: BigDecimal::zero(),
         }
     }
 }
 
-impl FiniteField {
+impl Field {
     pub fn rand_new(sec_param: usize, rng: &mut ThreadRng) -> Self {
-        FiniteField {
+        Field {
             order: BigDecimal::from((prime::random_prime(sec_param, rng).to_bigint().unwrap(), 0)),
         }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct FiniteFieldElement {
     pub number: BigDecimal,
-    field: Rc<FiniteField>,
+    field: Rc<Field>,
+}
+
+impl fmt::Debug for FiniteFieldElement {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "FieldElement {{ number: {}, fieldorder: {} }}",
+            self.number, self.field.order
+        )
+    }
+}
+
+impl fmt::Display for FiniteFieldElement {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} mod {}", self.number, self.field.order)
+    }
 }
 
 impl Add for &FiniteFieldElement {
     type Output = FiniteFieldElement;
 
     fn add(self, b: Self) -> FiniteFieldElement {
-        if self.field != b.field && !(b.field.is_zero()) {
+        if self.field != b.field {
+            if Zero::is_zero(&self.field.order) {
+                return FiniteFieldElement {
+                    number: &(&self.number + &b.number) % &b.field.order,
+                    field: b.field.clone(),
+                };
+            }
+            if Zero::is_zero(&b.field.order) {
+                return FiniteFieldElement {
+                    number: &(&self.number + &b.number) % &self.field.order,
+                    field: self.field.clone(),
+                };
+            }
             panic!(
                 "adding {:?} and {:?} did't work they have differnt fields",
                 self, b
             );
+        }
+        if Zero::is_zero(&self.field.order) {
+            return FiniteFieldElement {
+                number: &self.number + &b.number,
+                field: self.field.clone(),
+            };
         }
         FiniteFieldElement {
             number: &(&self.number + &b.number) % &self.field.order,
@@ -59,11 +99,29 @@ impl Add for FiniteFieldElement {
     type Output = FiniteFieldElement;
 
     fn add(self, b: Self) -> FiniteFieldElement {
-        if self.field != b.field && !(b.field.is_zero()) {
+        if self.field != b.field {
+            if Zero::is_zero(&self.field.order) {
+                return FiniteFieldElement {
+                    number: &(&self.number + &b.number) % &b.field.order,
+                    field: b.field,
+                };
+            }
+            if Zero::is_zero(&b.field.order) {
+                return FiniteFieldElement {
+                    number: &(&self.number + &b.number) % &self.field.order,
+                    field: self.field,
+                };
+            }
             panic!(
                 "adding {:?} and {:?} did't work they have differnt fields",
                 self, b
             );
+        }
+        if Zero::is_zero(&self.field.order) {
+            return FiniteFieldElement {
+                number: &self.number + &b.number,
+                field: self.field,
+            };
         }
         FiniteFieldElement {
             number: &(&self.number + &b.number) % &self.field.order,
@@ -114,7 +172,7 @@ impl Zero for FiniteFieldElement {
     fn zero() -> FiniteFieldElement {
         FiniteFieldElement {
             number: Zero::zero(),
-            field: Rc::new(FiniteField::zero()),
+            field: Rc::new(Field::zero()),
         }
     }
 }
@@ -161,18 +219,18 @@ impl One for FiniteFieldElement {
     fn one() -> FiniteFieldElement {
         FiniteFieldElement {
             number: One::one(),
-            field: Rc::new(FiniteField::zero()),
+            field: Rc::new(Field::zero()),
         }
     }
 }
 
 impl FiniteFieldElement {
-    pub fn rand_new(field: &Rc<FiniteField>, rng: &mut ThreadRng) -> FiniteFieldElement {
+    pub fn rand_new(field: &Rc<Field>, rng: &mut ThreadRng) -> FiniteFieldElement {
         let r = rng.gen_bigint_range(&Zero::zero(), &field.order.to_bigint().unwrap());
         Self::new(BigDecimal::from((r, 0)), &field)
     }
 
-    pub fn new(number: BigDecimal, field: &Rc<FiniteField>) -> FiniteFieldElement {
+    pub fn new(number: BigDecimal, field: &Rc<Field>) -> FiniteFieldElement {
         FiniteFieldElement {
             number: &number % &field.order,
             field: field.clone(),

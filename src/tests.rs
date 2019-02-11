@@ -1,12 +1,28 @@
 use crate::elgamal;
+use crate::fields::{Field, FiniteFieldElement};
 use crate::groups::{PrimeGroup, PrimeGroupElement};
+use crate::matrix::dot;
 use crate::prime::random_prime;
+use crate::regev;
 use crate::traits::PubKEncryption;
-use crate::TWO;
 use ndarray::arr2;
 use num_bigint::ToBigUint;
+use num_traits::{One, Zero};
 use rand;
 use std::rc;
+
+#[test]
+fn field() {
+    let mut rng = rand::thread_rng();
+    let f = rc::Rc::new(Field::rand_new(2, &mut rng));
+    let z: FiniteFieldElement = Zero::zero();
+    let o: FiniteFieldElement = One::one();
+    let r: FiniteFieldElement = FiniteFieldElement::rand_new(&f, &mut rng);
+    println!("{:?}", &z + &o);
+    println!("{:?}", &z + &r);
+    println!("{:?}", &r + &o);
+    println!("{:?}", &r + &r);
+}
 
 #[test]
 fn gen_prime() {
@@ -43,5 +59,26 @@ fn test_elgamal() {
         let c = elgamal::ElGamal::encrypt(&pk, &a, &mut rng);
         let m = elgamal::ElGamal::decrypt(&sk, &c, &mut rng);
         assert_eq!(a, m.unwrap());
+    }
+}
+
+#[test]
+fn test_matrix_mul() {
+    let mut rng = rand::thread_rng();
+    let f = rc::Rc::new(Field::rand_new(2, &mut rng));
+    let a = arr2(&[[FiniteFieldElement::rand_new(&f, &mut rng)]]);
+    let b = arr2(&[[FiniteFieldElement::rand_new(&f, &mut rng), One::one()]]);
+    println!("{:?}", dot(&a, &b));
+}
+
+#[test]
+fn test_regev() {
+    let mut rng = rand::thread_rng();
+    for _ in 1..5 {
+        let (pk, sk) = regev::Regev::key_generation(2, &mut rng);
+        let a = regev::Message(true);
+        let c = regev::Regev::encrypt(&pk, &a, &mut rng);
+        let m = regev::Regev::decrypt(&sk, &c, &mut rng).unwrap();
+        assert_eq!(a, m);
     }
 }
