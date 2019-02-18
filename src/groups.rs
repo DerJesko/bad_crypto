@@ -18,9 +18,9 @@ impl PrimeGroup {
         loop {
             let p = prime::random_prime(sec_param, rng);
             let one: BigUint = One::one();
-            if prime::prime_eh(&(&(&p * &(2 as u8)) + &one), sec_param, rng) {
+            if prime::prime_eh(&(&(&p * (2 as u8)) + &one), sec_param, rng) {
                 return PrimeGroup {
-                    modulus: &p * &(2 as u8) + one,
+                    modulus: &p * (2 as u8) + one,
                     big_prime: p,
                     generator: (3 as u8).to_biguint().unwrap(),
                 };

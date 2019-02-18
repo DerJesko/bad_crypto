@@ -36,12 +36,8 @@ impl PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for NaorYung {
                 pk2: pk2.clone(),
             },
             SecretKey {
-                pk: PublicKey {
-                    crs: crs,
-                    pk1: pk1,
-                    pk2: pk2,
-                },
-                sk1: sk1,
+                pk: PublicKey { crs, pk1, pk2 },
+                sk1,
             },
         )
     }

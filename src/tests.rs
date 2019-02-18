@@ -5,11 +5,18 @@ use crate::matrix::dot;
 use crate::prime::random_prime;
 use crate::regev;
 use crate::traits::PubKEncryption;
+use bigdecimal::BigDecimal;
 use ndarray::arr2;
 use num_bigint::ToBigUint;
 use num_traits::{One, Zero};
 use rand;
+use rand::Rng;
 use std::rc;
+
+#[test]
+fn deci() {
+    println!("a / b: {}", BigDecimal::from(20) / BigDecimal::from(3))
+}
 
 #[test]
 fn field() {
@@ -50,15 +57,15 @@ fn gen_group() {
 #[test]
 fn test_elgamal() {
     let mut rng = rand::thread_rng();
-    for _ in 1..5 {
+    for _ in 0..5 {
         let (pk, sk) = elgamal::ElGamal::key_generation(24, &mut rng);
         let a = elgamal::Message::new(PrimeGroupElement::new(
             (13338 as usize).to_biguint().unwrap(),
             &pk.generator_g.group,
         ));
         let c = elgamal::ElGamal::encrypt(&pk, &a, &mut rng);
-        let m = elgamal::ElGamal::decrypt(&sk, &c, &mut rng);
-        assert_eq!(a, m.unwrap());
+        let m = elgamal::ElGamal::decrypt(&sk, &c, &mut rng).unwrap();
+        assert_eq!(a, m);
     }
 }
 
@@ -74,11 +81,12 @@ fn test_matrix_mul() {
 #[test]
 fn test_regev() {
     let mut rng = rand::thread_rng();
-    for _ in 1..5 {
+    for _ in 0..5 {
         let (pk, sk) = regev::Regev::key_generation(2, &mut rng);
-        let a = regev::Message(true);
+        let a = regev::Message(rng.gen());
         let c = regev::Regev::encrypt(&pk, &a, &mut rng);
         let m = regev::Regev::decrypt(&sk, &c, &mut rng).unwrap();
+        println!("{:?}", m);
         assert_eq!(a, m);
     }
 }

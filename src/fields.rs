@@ -158,7 +158,7 @@ impl Sub for FiniteFieldElement {
             );
         }
         FiniteFieldElement {
-            number: &(&self.number - &b.number) % &self.field.order,
+            number: (&(&self.number - &b.number) + &self.field.order) % &self.field.order,
             field: self.field,
         }
     }

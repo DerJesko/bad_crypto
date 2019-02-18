@@ -51,7 +51,7 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for ElGam
         let Ciphertext(c1, c2) = cipher_text;
         let group = &sec_key.pk.generator_g.group;
         Some(Message(
-            &(c1.pow(&group.exp_inverse(&sec_key.exponent))) * &c2,
+            &(c1.pow(&group.exp_inverse(&sec_key.exponent))) * c2,
         ))
     }
 

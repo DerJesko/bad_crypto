@@ -13,7 +13,7 @@ mod matrix;
 mod naor_yung;
 mod prime;
 mod prime2000;
-mod regev;
+pub mod regev;
 mod traits;
 
 #[cfg(test)]

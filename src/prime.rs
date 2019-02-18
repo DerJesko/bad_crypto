@@ -5,12 +5,7 @@ use num_traits::{One, Zero};
 use rand::prelude::ThreadRng;
 
 pub fn random_prime(sec_param: usize, rng: &mut ThreadRng) -> BigUint {
-    let n;
-    if sec_param < 14 {
-        n = 14;
-    } else {
-        n = sec_param;
-    }
+    let n = if sec_param < 14 { 14 } else { sec_param };
     let mut res;
     let two = TWO();
     let min_number = MIN_ODD();
