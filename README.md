@@ -10,7 +10,9 @@ ToDo list:
 * [ ] Diffie-Hellman Key Exchange
 * [ ] RSA Public Key Encryption
 * [ ] Rabin Public Key Encryption
-* [x] (kind of: has no working NIZK yet) Naor-Yung Public Key Encryption
+* [ ] Naor-Yung Public Key Encryption
+  * [ ] NIZK Proof
+  * [x] implies Naor-Yung
 * [x] Regev Public Key Encrytion
 * [ ] Dolev-Dwork-Naor Construction
 * [ ] From Tag-Based Encryption to IND-CCA2 Encryption
