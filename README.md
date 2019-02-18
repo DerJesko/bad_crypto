@@ -11,7 +11,7 @@ ToDo list:
 * [ ] RSA Public Key Encryption
 * [ ] Rabin Public Key Encryption
 * [x] (kind of: has no working NIZK yet) Naor-Yung Public Key Encryption
-* [ ] Regev Public Key Encrytion
+* [x] Regev Public Key Encrytion
 * [ ] Dolev-Dwork-Naor Construction
 * [ ] From Tag-Based Encryption to IND-CCA2 Encryption
 * [ ] Boneh-Canetti-Halevi-Katz Transformation
