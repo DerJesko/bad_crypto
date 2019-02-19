@@ -14,6 +14,7 @@ mod naor_yung;
 mod prime;
 mod prime2000;
 pub mod regev;
+mod rsa;
 mod traits;
 
 #[cfg(test)]

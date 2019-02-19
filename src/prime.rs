@@ -62,3 +62,17 @@ fn div_by_pow_2(n: BigUint) -> (usize, BigUint) {
     }
     (i, n1)
 }
+
+pub fn gcd(a: &BigUint, b: &BigUint) -> BigUint {
+    if a == b {
+        a.clone()
+    } else if a > b {
+        gcd(&(a - b), b)
+    } else {
+        gcd(a, &(b - a))
+    }
+}
+
+pub fn lcm(a: &BigUint, b: &BigUint) -> BigUint {
+    (a * b) / gcd(a, b)
+}
