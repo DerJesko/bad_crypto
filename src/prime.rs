@@ -64,13 +64,35 @@ fn div_by_pow_2(n: BigUint) -> (usize, BigUint) {
 }
 
 pub fn gcd(a: &BigUint, b: &BigUint) -> BigUint {
-    if a == b {
+    if Zero::is_zero(b) {
         a.clone()
-    } else if a > b {
-        gcd(&(a - b), b)
     } else {
-        gcd(a, &(b - a))
+        gcd(&(b % a), a)
     }
+}
+
+pub fn extended_gcd(a: BigUint, b: BigUint) -> ((BigUint, BigUint), BigUint) {
+    let mut s: BigUint = Zero::zero();
+    let mut r = b.clone();
+    let mut old_s: BigUint = One::one();
+    let mut old_r = a.clone();
+    let mut quotient;
+    while !r.is_zero() {
+        quotient = &old_r / &r;
+        let r1 = old_r - &quotient * &r;
+        old_r = r;
+        r = r1;
+        let s1 = &old_s - &quotient * &s;
+        old_s = s;
+        s = s1;
+    }
+    let t;
+    if b.is_zero() {
+        t = BigUint::from(0 as u8);
+    } else {
+        t = (&old_r - &old_s * a) / b;
+    }
+    ((old_s, t), old_r)
 }
 
 pub fn lcm(a: &BigUint, b: &BigUint) -> BigUint {
