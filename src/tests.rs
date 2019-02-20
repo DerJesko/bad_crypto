@@ -1,13 +1,12 @@
-use crate::elgamal;
 use crate::fields::{Field, FiniteFieldElement};
 use crate::groups::{PrimeGroup, PrimeGroupElement};
 use crate::matrix::dot;
-use crate::prime::random_prime;
-use crate::regev;
+use crate::prime::{extended_gcd, random_prime};
 use crate::traits::PubKEncryption;
+use crate::{elgamal, regev, rsa};
 use bigdecimal::BigDecimal;
 use ndarray::arr2;
-use num_bigint::ToBigUint;
+use num_bigint::{ToBigInt, ToBigUint};
 use num_traits::{One, Zero};
 use rand;
 use rand::Rng;
@@ -86,6 +85,28 @@ fn test_regev() {
         let a = regev::Message(rng.gen());
         let c = regev::Regev::encrypt(&pk, &a, &mut rng);
         let m = regev::Regev::decrypt(&sk, &c, &mut rng).unwrap();
+        println!("{:?}", m);
+        assert_eq!(a, m);
+    }
+}
+
+#[test]
+fn test_egcd() {
+    let a = (240 as u8).to_bigint().unwrap();
+    let b = (46 as u8).to_bigint().unwrap();
+    let ((x, y), _z) = extended_gcd(a.clone(), b.clone());
+    println!("x: {}, y: {}", x, y);
+    println!("{}", a * x + b * y);
+}
+
+#[test]
+fn test_rsa() {
+    let mut rng = rand::thread_rng();
+    for _ in 0..5 {
+        let (pk, sk) = rsa::RSA::key_generation(2, &mut rng);
+        let a = rsa::Message((13338 as usize).to_biguint().unwrap());
+        let c = rsa::RSA::encrypt(&pk, &a, &mut rng);
+        let m = rsa::RSA::decrypt(&sk, &c, &mut rng).unwrap();
         println!("{:?}", m);
         assert_eq!(a, m);
     }

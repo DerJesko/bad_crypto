@@ -1,39 +1,45 @@
 use crate::prime::{extended_gcd, lcm, random_prime};
 use crate::traits;
-use num_bigint::BigUint;
+use num_bigint::{BigUint, ToBigInt};
 use rand::prelude::ThreadRng;
 
 pub struct RSA();
 
-struct Message();
-struct Ciphertext();
-#[derive(Clone)]
-struct PublicKey {
-    n: BigUint,
-    e: BigUint,
+#[derive(Debug, PartialEq)]
+pub struct Message(pub BigUint);
+pub struct Ciphertext(BigUint);
+#[derive(Clone, Debug)]
+pub struct PublicKey {
+    pub n: BigUint,
+    pub e: BigUint,
 }
-struct SecretKey(BigUint, PublicKey);
+pub struct SecretKey(pub BigUint, PublicKey);
 
 impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for RSA {
     fn key_generation(sec_param: usize, rng: &mut ThreadRng) -> (PublicKey, SecretKey) {
         let p = random_prime(sec_param, rng);
         let q = random_prime(sec_param, rng);
         let n = &p * &q;
-        let lambda_n = lcm(&(p - (1 as u8)), &(q - (1 as u8)));
+        let lambda_n = lcm(&(p - (1 as u8)), &(q - (1 as u8))).to_bigint().unwrap();
         let e: BigUint = BigUint::from(1009 as u16);
-        let ((d, _), _) = extended_gcd(e.clone(), lambda_n);
+        let ((e_inverse, _), _) = extended_gcd(e.to_bigint().unwrap(), lambda_n.clone());
+        let e_inverse_pos = (e_inverse + &lambda_n) % &lambda_n;
         let pk = PublicKey { n, e };
-
-        (pk.clone(), SecretKey(d, pk))
+        (
+            pk.clone(),
+            SecretKey(e_inverse_pos.to_biguint().unwrap(), pk),
+        )
     }
-    fn encrypt(pub_key: &PublicKey, message: &Message, rng: &mut ThreadRng) -> Ciphertext {
-        panic!();
+    fn encrypt(pub_key: &PublicKey, message: &Message, _rng: &mut ThreadRng) -> Ciphertext {
+        let Message(m) = message;
+        Ciphertext(m.modpow(&pub_key.e, &pub_key.n))
     }
     fn decrypt(
         sec_key: &SecretKey,
         cipher_text: &Ciphertext,
-        rng: &mut ThreadRng,
+        _rng: &mut ThreadRng,
     ) -> Option<Message> {
-        panic!();
+        let Ciphertext(c) = cipher_text;
+        Some(Message(c.modpow(&sec_key.0, &sec_key.1.n)))
     }
 }

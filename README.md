@@ -8,7 +8,7 @@ ToDo list:
 * [x] Elgamal Public Key Encryption
 * [x] Elgamal Homomorphic Public Key Encryption
 * [ ] Diffie-Hellman Key Exchange
-* [ ] RSA Public Key Encryption
+* [x] RSA Public Key Encryption
 * [ ] Rabin Public Key Encryption
 * [ ] Naor-Yung Public Key Encryption
   * [ ] NIZK Proof

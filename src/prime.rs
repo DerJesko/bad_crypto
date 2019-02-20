@@ -1,6 +1,6 @@
 use crate::prime2000::PRIME2000;
 use crate::{MIN_ODD, TWO};
-use num_bigint::{BigUint, RandBigInt};
+use num_bigint::{BigInt, BigUint, RandBigInt};
 use num_traits::{One, Zero};
 use rand::prelude::ThreadRng;
 
@@ -64,17 +64,17 @@ fn div_by_pow_2(n: BigUint) -> (usize, BigUint) {
 }
 
 pub fn gcd(a: &BigUint, b: &BigUint) -> BigUint {
-    if Zero::is_zero(b) {
-        a.clone()
+    if Zero::is_zero(a) {
+        b.clone()
     } else {
         gcd(&(b % a), a)
     }
 }
 
-pub fn extended_gcd(a: BigUint, b: BigUint) -> ((BigUint, BigUint), BigUint) {
-    let mut s: BigUint = Zero::zero();
+pub fn extended_gcd(a: BigInt, b: BigInt) -> ((BigInt, BigInt), BigInt) {
+    let mut s: BigInt = Zero::zero();
     let mut r = b.clone();
-    let mut old_s: BigUint = One::one();
+    let mut old_s: BigInt = One::one();
     let mut old_r = a.clone();
     let mut quotient;
     while !r.is_zero() {
@@ -86,13 +86,12 @@ pub fn extended_gcd(a: BigUint, b: BigUint) -> ((BigUint, BigUint), BigUint) {
         old_s = s;
         s = s1;
     }
-    let t;
-    if b.is_zero() {
-        t = BigUint::from(0 as u8);
+    let bezout_t = if b.is_zero() {
+        BigInt::from(0 as u8)
     } else {
-        t = (&old_r - &old_s * a) / b;
-    }
-    ((old_s, t), old_r)
+        (&old_r - &old_s * a) / b
+    };
+    ((old_s, bezout_t), old_r)
 }
 
 pub fn lcm(a: &BigUint, b: &BigUint) -> BigUint {
