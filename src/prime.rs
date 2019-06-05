@@ -18,37 +18,29 @@ pub fn random_prime(sec_param: usize, rng: &mut ThreadRng) -> BigUint {
 }
 
 pub fn prime_eh(n: &BigUint, amount_checks: usize, rng: &mut ThreadRng) -> bool {
-    let mut prime_candidate = true;
     for j in PRIME2000.iter() {
         if Zero::is_zero(&(n % j)) {
-            prime_candidate = false;
-            break;
+            return false;
         }
     }
-    if !prime_candidate {
-        return false;
-    }
-
     let one: BigUint = One::one();
     let two = TWO();
     let n_minus_one: BigUint = n - one;
     let (exponent, factor) = div_by_pow_2(n_minus_one.clone());
 
-    'witness: for _ in 1..amount_checks {
+    'witness: for _ in 0..amount_checks {
         let a = rng.gen_biguint_range(&(two), &(n - &two));
         let mut x = a.modpow(&factor, n);
-        if One::is_one(&x) || x == n_minus_one {
-            continue;
-        }
-        for _ in 1..(exponent - (1 as usize)) {
-            x = x.modpow(&two, n);
-            if x == n_minus_one {
-                continue 'witness;
+        if !(One::is_one(&x) || x == n_minus_one) {
+            for _ in 1..(exponent - (1 as usize)) {
+                x = x.modpow(&two, n);
+                if x == n_minus_one {
+                    continue 'witness;
+                }
             }
+            return false;
         }
-        return false;
     }
-
     true
 }
 

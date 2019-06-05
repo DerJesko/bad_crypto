@@ -1,34 +1,15 @@
-use crate::fields::{Field, FiniteFieldElement};
+use crate::fields::Field;
 use crate::groups::{PrimeGroup, PrimeGroupElement};
-use crate::matrix::dot;
+use crate::matrix::Matrix;
 use crate::prime::{extended_gcd, random_prime};
 use crate::traits::PubKEncryption;
 use crate::{elgamal, regev, rsa};
-use bigdecimal::BigDecimal;
 use ndarray::arr2;
 use num_bigint::{ToBigInt, ToBigUint};
 use num_traits::{One, Zero};
 use rand;
 use rand::Rng;
 use std::rc;
-
-#[test]
-fn deci() {
-    println!("a / b: {}", BigDecimal::from(20) / BigDecimal::from(3))
-}
-
-#[test]
-fn field() {
-    let mut rng = rand::thread_rng();
-    let f = rc::Rc::new(Field::rand_new(2, &mut rng));
-    let z: FiniteFieldElement = Zero::zero();
-    let o: FiniteFieldElement = One::one();
-    let r: FiniteFieldElement = FiniteFieldElement::rand_new(&f, &mut rng);
-    println!("{:?}", &z + &o);
-    println!("{:?}", &z + &r);
-    println!("{:?}", &r + &o);
-    println!("{:?}", &r + &r);
-}
 
 #[test]
 fn gen_prime() {
@@ -68,15 +49,7 @@ fn test_elgamal() {
     }
 }
 
-#[test]
-fn test_matrix_mul() {
-    let mut rng = rand::thread_rng();
-    let f = rc::Rc::new(Field::rand_new(2, &mut rng));
-    let a = arr2(&[[FiniteFieldElement::rand_new(&f, &mut rng)]]);
-    let b = arr2(&[[FiniteFieldElement::rand_new(&f, &mut rng), One::one()]]);
-    println!("{:?}", dot(&a, &b));
-}
-
+/*
 #[test]
 fn test_regev() {
     let mut rng = rand::thread_rng();
@@ -89,7 +62,7 @@ fn test_regev() {
         assert_eq!(a, m);
     }
 }
-
+*/
 #[test]
 fn test_egcd() {
     let a = (240 as u8).to_bigint().unwrap();

@@ -1,4 +1,4 @@
-use crate::fields::{Field, FiniteFieldElement};
+/*use crate::fields::{Field, FiniteFieldElement};
 use crate::matrix::dot;
 use crate::traits;
 use bigdecimal::BigDecimal;
@@ -88,3 +88,4 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev
         Some(Message(z.abs() < &pk.field.order / 4))
     }
 }
+*/

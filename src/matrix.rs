@@ -1,16 +1,57 @@
-use crate::fields::FiniteFieldElement;
+use crate::fields;
 use ndarray::{Array, Array2, ShapeBuilder};
 use num_traits::Zero;
+use std::fmt;
+use std::ops::{Add, Mul, Sub};
+use std::rc::Rc;
 
-pub fn dot(
-    a: &Array2<FiniteFieldElement>,
-    b: &Array2<FiniteFieldElement>,
-) -> Array2<FiniteFieldElement> {
-    Array::from_shape_fn((a.shape()[0], b.shape()[1]).f(), |(i, j)| {
-        let mut res = Zero::zero();
-        for l in 0..a.shape()[1] {
-            res = res + &a[[i, l]] * &b[[l, j]];
+#[derive(Clone)]
+pub struct Matrix {
+    m: Array2<f64>,
+    field: Rc<fields::Field>,
+}
+
+impl fmt::Debug for Matrix {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Matrix {{ matrix: {}, fieldorder: {} }}",
+            self.m, self.field.order
+        )
+    }
+}
+
+impl Add for &Matrix {
+    type Output = Matrix;
+
+    fn add(self, b: Self) -> Matrix {
+        if self.field != b.field {
+            if Zero::is_zero(&self.field.order) {
+                return Matrix {
+                    m: &(&self.m + &b.m) % b.field.order,
+                    field: b.field.clone(),
+                };
+            }
+            if Zero::is_zero(&b.field.order) {
+                return Matrix {
+                    m: &(&self.m + &b.m) % self.field.order,
+                    field: self.field.clone(),
+                };
+            }
+            panic!(
+                "adding {:?} and {:?} did't work they have differnt fields",
+                self, b
+            );
         }
-        res
-    })
+        if Zero::is_zero(&self.field.order) {
+            return Matrix {
+                m: &self.m + &b.m,
+                field: self.field.clone(),
+            };
+        }
+        Matrix {
+            m: &(&self.m + &b.m) % self.field.order,
+            field: self.field.clone(),
+        }
+    }
 }
