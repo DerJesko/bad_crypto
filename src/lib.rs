@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate ndarray;
 extern crate num_bigint;
 extern crate num_integer;
@@ -5,13 +6,13 @@ extern crate num_traits;
 extern crate rand;
 
 //mod bgn;
-mod prime;
 mod dummy_nikz;
 pub mod elgamal;
 mod fields;
 mod groups;
 mod matrix;
 mod naor_yung;
+mod prime;
 mod prime2000;
 pub mod regev;
 pub mod rsa;

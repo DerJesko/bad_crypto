@@ -11,6 +11,20 @@ use rand;
 use rand::Rng;
 use std::rc;
 
+use ndarray::prelude::*;
+
+#[test]
+fn gen_matrix() {
+    let mut rng = rand::thread_rng();
+    let f = rc::Rc::new(Field::rand_new(&mut rng));
+    println!("A Field: {:?}", f);
+    let m1 = Matrix::new(array![[1., 0.], [1., 1.]], f.clone());
+    let m2 = Matrix::new(array![[1., 1.], [0., 1.]], f.clone());
+    println!("m1: {:?}", m1);
+    println!("m2: {:?}", m2);
+    println!("m1+m2: {:?}", &m1 + &m2);
+}
+
 #[test]
 fn gen_prime() {
     let mut rng = rand::thread_rng();

@@ -11,6 +11,19 @@ pub struct Matrix {
     field: Rc<fields::Field>,
 }
 
+impl Matrix {
+    pub fn new(matrix: Array2<f64>, field: Rc<fields::Field>) -> Self {
+        if field.is_zero() {
+            Matrix { m: matrix, field }
+        } else {
+            Matrix {
+                m: matrix % field.order,
+                field,
+            }
+        }
+    }
+}
+
 impl fmt::Debug for Matrix {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -25,33 +38,26 @@ impl Add for &Matrix {
     type Output = Matrix;
 
     fn add(self, b: Self) -> Matrix {
-        if self.field != b.field {
-            if Zero::is_zero(&self.field.order) {
-                return Matrix {
-                    m: &(&self.m + &b.m) % b.field.order,
-                    field: b.field.clone(),
-                };
-            }
-            if Zero::is_zero(&b.field.order) {
-                return Matrix {
-                    m: &(&self.m + &b.m) % self.field.order,
-                    field: self.field.clone(),
-                };
-            }
-            panic!(
-                "adding {:?} and {:?} did't work they have differnt fields",
-                self, b
-            );
+        let result = &self.m + &b.m;
+        match fields::Field::unify(&self.field, &b.field) {
+            Some(f) => Matrix {
+                m: result,
+                field: f,
+            },
+            None => panic!("Failed to add {:?} and {:?} due to using different fields"),
         }
-        if Zero::is_zero(&self.field.order) {
-            return Matrix {
-                m: &self.m + &b.m,
-                field: self.field.clone(),
-            };
-        }
-        Matrix {
-            m: &(&self.m + &b.m) % self.field.order,
-            field: self.field.clone(),
+    }
+}
+
+impl Matrix {
+    pub fn dot(&self, b: &Matrix) -> Matrix {
+        let result = self.m.dot(&b.m);
+        match fields::Field::unify(&self.field, &b.field) {
+            Some(f) => Matrix {
+                m: result,
+                field: f,
+            },
+            None => panic!("Matix multiply {:?} and {:?} due to using different fields"),
         }
     }
 }
