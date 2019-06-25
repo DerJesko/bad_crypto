@@ -18,13 +18,33 @@ impl PrimeGroup {
         loop {
             let p = prime::random_prime(sec_param, rng);
             let one: BigUint = One::one();
-            if prime::prime_eh(&(&(&p * (2 as u8)) + &one), sec_param, rng) {
+            let modulus = (&p * (2 as u8)) + &one;
+            let generator = PrimeGroup::get_generator(sec_param, &p, &modulus, rng);
+            if prime::prime_eh(&(&modulus), sec_param, rng) {
                 return PrimeGroup {
-                    modulus: &p * (2 as u8) + one,
+                    modulus,
                     big_prime: p,
-                    generator: (3 as u8).to_biguint().unwrap(),
+                    generator,
                 };
             }
+        }
+    }
+
+    fn get_generator(
+        sec_param: usize,
+        big_prime: &BigUint,
+        modulus: &BigUint,
+        rng: &mut ThreadRng,
+    ) -> BigUint {
+        loop {
+            let candidate = prime::random_prime(sec_param, rng);
+            if One::is_one(&candidate.modpow(&(2 as usize).to_biguint().unwrap(), modulus)) {
+                continue;
+            }
+            if One::is_one(&candidate.modpow(big_prime, modulus)) {
+                continue;
+            }
+            return candidate;
         }
     }
 
