@@ -1,7 +1,7 @@
-use crate::fields::Field;
 use crate::groups::{PrimeGroup, PrimeGroupElement};
 use crate::matrix::Matrix;
 use crate::prime::{extended_gcd, random_prime};
+use crate::ring::Ring;
 use crate::traits::PubKEncryption;
 use crate::{elgamal, regev, rsa};
 use ndarray::arr2;
@@ -15,11 +15,10 @@ use ndarray::prelude::*;
 
 #[test]
 fn gen_matrix() {
-    let mut rng = rand::thread_rng();
-    let f = rc::Rc::new(Field::rand_new(&mut rng));
+    let f = rc::Rc::new(Ring::new(20));
     println!("A Field: {:?}", f);
-    let m1 = Matrix::new(array![[1., 0.], [1., 1.]], f.clone());
-    let m2 = Matrix::new(array![[1., 1.], [0., 1.]], f.clone());
+    let m1 = Matrix::new(array![[1, 0], [1, 1]], f.clone());
+    let m2 = Matrix::new(array![[1, 1], [0, 1]], f.clone());
     println!("m1: {:?}", m1);
     println!("m2: {:?}", m2);
     println!("m1+m2: {:?}", &m1 + &m2);

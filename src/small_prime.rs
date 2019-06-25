@@ -1,27 +1,25 @@
-// This should not be in use
-use crate::prime2000::PRIME2000;
 use num_traits::{One, Zero};
 use rand::prelude::ThreadRng;
 use rand::Rng;
 
-pub fn random_prime(sec_param: usize, rng: &mut ThreadRng) -> usize {
-    let n = if sec_param < 14 { 14 } else { sec_param };
-    let mut res;
-    let min_odd = PRIME2000[1999];
+pub fn random_prime_in_range(
+    checks: usize,
+    lower_bound: usize,
+    upper_bound: usize,
+    rng: &mut ThreadRng,
+) -> usize {
+    let mut res: usize;
+    let l = lower_bound / 2;
+    let u = upper_bound / 2;
     loop {
-        res = rng.gen_range(0, n) * 2 + min_odd;
-        if prime_eh(res, n, rng) {
+        res = (rng.gen_range(l, u) * 2) + 1;
+        if prime_eh(res, checks, rng) {
             return res;
         }
     }
 }
 
 pub fn prime_eh(n: usize, amount_checks: usize, rng: &mut ThreadRng) -> bool {
-    for j in PRIME2000.iter() {
-        if Zero::is_zero(&(n % j)) {
-            return false;
-        }
-    }
     let (exponent, factor) = div_by_pow_2(n - 1);
     'witness: for _ in 0..amount_checks {
         let a = rng.gen_range(2, n - 2);

@@ -1,4 +1,4 @@
-use crate::fields;
+use crate::ring;
 use ndarray::{Array, Array2, ShapeBuilder};
 use num_traits::Zero;
 use std::fmt;
@@ -7,12 +7,12 @@ use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Matrix {
-    m: Array2<f64>,
-    field: Rc<fields::Field>,
+    m: Array2<usize>,
+    field: Rc<ring::Ring>,
 }
 
 impl Matrix {
-    pub fn new(matrix: Array2<f64>, field: Rc<fields::Field>) -> Self {
+    pub fn new(matrix: Array2<usize>, field: Rc<ring::Ring>) -> Self {
         if field.is_zero() {
             Matrix { m: matrix, field }
         } else {
@@ -39,12 +39,15 @@ impl Add for &Matrix {
 
     fn add(self, b: Self) -> Matrix {
         let result = &self.m + &b.m;
-        match fields::Field::unify(&self.field, &b.field) {
+        match ring::Ring::unify(&self.field, &b.field) {
             Some(f) => Matrix {
                 m: result,
                 field: f,
             },
-            None => panic!("Failed to add {:?} and {:?} due to using different fields"),
+            None => panic!(
+                "Failed to add {:?} and {:?} due to using different fields",
+                self, b
+            ),
         }
     }
 }
@@ -52,12 +55,15 @@ impl Add for &Matrix {
 impl Matrix {
     pub fn dot(&self, b: &Matrix) -> Matrix {
         let result = self.m.dot(&b.m);
-        match fields::Field::unify(&self.field, &b.field) {
+        match ring::Ring::unify(&self.field, &b.field) {
             Some(f) => Matrix {
                 m: result,
                 field: f,
             },
-            None => panic!("Matix multiply {:?} and {:?} due to using different fields"),
+            None => panic!(
+                "Matix multiply {:?} and {:?} due to using different fields",
+                self, b
+            ),
         }
     }
 }

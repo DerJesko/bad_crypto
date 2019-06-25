@@ -1,22 +1,19 @@
-/*use crate::fields::{Field, FiniteFieldElement};
-use crate::matrix::dot;
+use crate::matrix::Matrix;
+use crate::ring::Ring;
+use crate::small_prime::random_prime_in_range;
 use crate::traits;
-use bigdecimal::BigDecimal;
 use ndarray::{Array, Array2, ShapeBuilder};
-use rand::distributions::StandardNormal;
+use rand::distributions::Binomial;
 use rand::prelude::*;
 use std::rc::Rc;
 
 const M: usize = 5;
 const N: usize = 2;
 
-fn chi(b: &BigDecimal, rng: &mut ThreadRng) -> BigDecimal {
-    loop {
-        let r = rng.sample(StandardNormal);
-        if &BigDecimal::from(r.abs()) < b {
-            return BigDecimal::from(r);
-        }
-    }
+fn chi(b: u64, rng: &mut ThreadRng) -> isize {
+    let distribution = Binomial::new(b * 2 - 1, 0.5);
+    let r = rng.sample(distribution);
+    (r as isize) - (b as isize) + 1
 }
 
 pub struct Regev();
@@ -24,23 +21,23 @@ pub struct Regev();
 #[allow(non_snake_case)]
 #[derive(Clone)]
 pub struct PublicKey {
-    field: Rc<Field>,
-    A: Array2<FiniteFieldElement>,
-    b: Array2<FiniteFieldElement>,
+    A: Matrix,
+    b: Matrix,
 }
 
 #[derive(Debug)]
-pub struct Ciphertext(Array2<FiniteFieldElement>, Array2<FiniteFieldElement>);
+pub struct Ciphertext(Matrix, Matrix);
 
 #[derive(PartialEq, Debug)]
 pub struct Message(pub bool);
 
-pub struct SecretKey(Array2<FiniteFieldElement>, PublicKey);
+pub struct SecretKey(Matrix, PublicKey);
 
 impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev {
     fn key_generation(sec_param: usize, rng: &mut ThreadRng) -> (PublicKey, SecretKey) {
-        let field = Rc::new(Field::rand_new(sec_param, rng));
-        let distribution_limit = &field.order / BigDecimal::from(8 * (M as u32));
+        let q = random_prime_in_range(sec_param, N * N, 2 * N * N, rng);
+        let field = Rc::new(Ring::new(q));
+        let distribution_limit = (q / (4 * M)) - 1;
         #[allow(non_snake_case)]
         let A = Array::from_shape_fn((M, N).f(), |_| FiniteFieldElement::rand_new(&field, rng));
         let s = Array::from_shape_fn((N, 1).f(), |_| FiniteFieldElement::rand_new(&field, rng));
@@ -88,4 +85,3 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev
         Some(Message(z.abs() < &pk.field.order / 4))
     }
 }
-*/

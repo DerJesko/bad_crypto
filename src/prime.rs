@@ -1,28 +1,21 @@
-use crate::prime2000::PRIME2000;
-use crate::{MIN_ODD, TWO};
+use crate::TWO;
 use num_bigint::{BigInt, BigUint, RandBigInt};
 use num_traits::{One, Zero};
 use rand::prelude::ThreadRng;
 
 pub fn random_prime(sec_param: usize, rng: &mut ThreadRng) -> BigUint {
-    let n = if sec_param < 14 { 14 } else { sec_param };
-    let mut res;
+    let mut res: BigUint;
     let two = TWO();
-    let min_number = MIN_ODD();
+    let one: BigUint = One::one();
     loop {
-        res = rng.gen_biguint(n) * &two + &min_number; // uniformly choose a odd number which is >17391
-        if prime_eh(&res, n, rng) {
+        res = (rng.gen_biguint(sec_param) * &two) + &one;
+        if prime_eh(&res, sec_param, rng) {
             return res;
         }
     }
 }
 
 pub fn prime_eh(n: &BigUint, amount_checks: usize, rng: &mut ThreadRng) -> bool {
-    for j in PRIME2000.iter() {
-        if Zero::is_zero(&(n % j)) {
-            return false;
-        }
-    }
     let one: BigUint = One::one();
     let two = TWO();
     let n_minus_one: BigUint = n - one;

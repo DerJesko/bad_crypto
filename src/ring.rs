@@ -1,27 +1,21 @@
-use crate::prime;
-use num_traits::{ToPrimitive, Zero};
-use rand::prelude::ThreadRng;
+use num_traits::Zero;
 use std::fmt;
 use std::rc::Rc;
 
 #[derive(PartialEq)]
-pub struct Field {
-    pub order: f64,
+pub struct Ring {
+    pub order: usize,
 }
 
-impl fmt::Debug for Field {
+impl fmt::Debug for Ring {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Field {{ order: {} }}", self.order)
     }
 }
 
-impl Field {
-    pub fn rand_new(rng: &mut ThreadRng) -> Self {
-        Field {
-            order: prime::random_prime(20, rng)
-                .to_f64()
-                .expect("the security parameter is too big"),
-        }
+impl Ring {
+    pub fn new(order: usize) -> Self {
+        Ring { order }
     }
 
     pub fn is_zero(&self) -> bool {
@@ -29,10 +23,10 @@ impl Field {
     }
 
     pub fn zero() -> Self {
-        Field { order: 0. }
+        Ring { order: 0 }
     }
 
-    pub fn unify(f1: &Rc<Field>, f2: &Rc<Field>) -> Option<Rc<Field>> {
+    pub fn unify(f1: &Rc<Ring>, f2: &Rc<Ring>) -> Option<Rc<Ring>> {
         if f1 != f2 {
             if f1.is_zero() {
                 return Some(f2.clone());
