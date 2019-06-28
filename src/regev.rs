@@ -23,6 +23,7 @@ pub struct Regev();
 pub struct PublicKey {
     A: Matrix,
     b: Matrix,
+    field: Rc<Ring>,
 }
 
 #[derive(Debug)]
@@ -39,33 +40,28 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev
         let field = Rc::new(Ring::new(q));
         let distribution_limit = (q / (4 * M)) - 1;
         #[allow(non_snake_case)]
-        let A = Array::from_shape_fn((M, N).f(), |_| FiniteFieldElement::rand_new(&field, rng));
-        let s = Array::from_shape_fn((N, 1).f(), |_| FiniteFieldElement::rand_new(&field, rng));
-        let e = Array::from_shape_fn((M, 1).f(), |_| {
-            FiniteFieldElement::new(chi(&distribution_limit, rng), &field)
-        });
-        let b = dot(&A, &s) + e;
-        let pk = PublicKey { field, A, b };
+        let A = Matrix::rand_new_of_shape(N, M, field.clone(), rng);
+        let s = Matrix::rand_new_of_shape(N, 1, field.clone(), rng);
+        let e = Matrix::new(
+            Array::from_shape_fn((M, 1).f(), |_| {
+                (chi(distribution_limit as u64, rng) + distribution_limit as isize) as usize
+            }),
+            field.clone(),
+        );
+        let b = Matrix::dot(&A, &s) + e;
+        let pk = PublicKey { A, b, field };
         (pk.clone(), SecretKey(s, pk))
     }
 
     fn encrypt(pub_key: &PublicKey, message: &Message, rng: &mut ThreadRng) -> Ciphertext {
         let Message(mu) = message;
-        let x = Array::from_shape_fn((1, M).f(), |_| {
-            FiniteFieldElement::new(
-                BigDecimal::from({
-                    if rng.gen() {
-                        1
-                    } else {
-                        0
-                    }
-                }),
-                &pub_key.field,
-            )
-        });
+        let x = Matrix::new(
+            Array::from_shape_fn((1, M).f(), |_| if rng.gen() { 1 } else { 0 }),
+            pub_key.field.clone(),
+        );
         Ciphertext(
-            dot(&x, &pub_key.A),
-            dot(&x, &pub_key.b)
+            Matrix::dot(&x, &pub_key.A),
+            Matrix::dot(&x, &pub_key.b)
                 + Array::from_shape_fn((1, 1).f(), |_| {
                     FiniteFieldElement::new(
                         &pub_key.field.order / 2 * BigDecimal::from(*mu as u8),
@@ -81,7 +77,8 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev
     ) -> Option<Message> {
         let Ciphertext(c1, c2) = cipher_text;
         let SecretKey(s, pk) = sec_key;
-        let z: BigDecimal = &(c2 - &dot(&c1, &s))[[0, 0]].number - &pk.field.order / 2;
-        Some(Message(z.abs() < &pk.field.order / 4))
+        let z = (c2 - &Matrix::dot(&c1, &s)).to_number().unwrap() as isize
+            - pk.field.order as isize / 2;
+        Some(Message(z.abs() < pk.field.order as isize / 4))
     }
 }
