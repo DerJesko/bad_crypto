@@ -1,10 +1,9 @@
 use crate::ring;
 use ndarray::{Array, Array2, ShapeBuilder};
-use num_traits::Zero;
 use rand::prelude::ThreadRng;
 use rand::Rng;
 use std::fmt;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Sub};
 use std::rc::Rc;
 
 #[derive(Clone)]
@@ -52,16 +51,16 @@ impl Sub for &Matrix {
     type Output = Matrix;
 
     fn sub(self, b: Self) -> Matrix {
-        let result = &self.m - &b.m; // TODO still wrong
-        match ring::Ring::unify(&self.field, &b.field) {
-            Some(f) => Matrix {
-                m: result,
-                field: f,
-            },
+        let ring = match ring::Ring::unify(&self.field, &b.field) {
+            Some(f) => f,
             None => panic!(
                 "Failed to add {:?} and {:?} due to using different fields",
                 self, b
             ),
+        };
+        Matrix {
+            m: (&self.m + ring.order) - &b.m,
+            field: ring,
         }
     }
 }

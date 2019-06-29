@@ -2,13 +2,13 @@ use crate::matrix::Matrix;
 use crate::ring::Ring;
 use crate::small_prime::random_prime_in_range;
 use crate::traits;
-use ndarray::{Array, Array2, ShapeBuilder};
+use ndarray::{Array, ShapeBuilder};
 use rand::distributions::Binomial;
 use rand::prelude::*;
 use std::rc::Rc;
 
 const M: usize = 5;
-const N: usize = 2;
+const N: usize = 7;
 
 fn chi(b: u64, rng: &mut ThreadRng) -> isize {
     let distribution = Binomial::new(b * 2 - 1, 0.5);
@@ -37,6 +37,7 @@ pub struct SecretKey(Matrix, PublicKey);
 impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev {
     fn key_generation(sec_param: usize, rng: &mut ThreadRng) -> (PublicKey, SecretKey) {
         let q = random_prime_in_range(sec_param, N * N, 2 * N * N, rng);
+        println!("{}", q);
         let field = Rc::new(Ring::new(q));
         let distribution_limit = (q / (4 * M)) - 1;
         #[allow(non_snake_case)]
@@ -59,15 +60,13 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev
             Array::from_shape_fn((1, M).f(), |_| if rng.gen() { 1 } else { 0 }),
             pub_key.field.clone(),
         );
+        let enc_mu = Matrix::new(
+            Array::from_shape_fn((1, 1).f(), |_| &pub_key.field.order / 2 * *mu as usize),
+            pub_key.field.clone(),
+        );
         Ciphertext(
             Matrix::dot(&x, &pub_key.A),
-            Matrix::dot(&x, &pub_key.b)
-                + Array::from_shape_fn((1, 1).f(), |_| {
-                    FiniteFieldElement::new(
-                        &pub_key.field.order / 2 * BigDecimal::from(*mu as u8),
-                        &pub_key.field,
-                    )
-                }),
+            Matrix::dot(&x, &pub_key.b) + enc_mu,
         )
     }
     fn decrypt(

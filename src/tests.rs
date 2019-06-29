@@ -4,14 +4,14 @@ use crate::prime::{extended_gcd, random_prime};
 use crate::ring::Ring;
 use crate::traits::PubKEncryption;
 use crate::{elgamal, regev, rsa};
-use ndarray::arr2;
+//use ndarray::arr2;
 use num_bigint::{ToBigInt, ToBigUint};
-use num_traits::{One, Zero};
+//use num_traits::{One, Zero};
 use rand;
 use rand::Rng;
 use std::rc;
 
-use ndarray::prelude::*;
+//use ndarray::prelude::*;
 
 #[test]
 fn gen_matrix() {
@@ -62,7 +62,6 @@ fn test_elgamal() {
     }
 }
 
-/*
 #[test]
 fn test_regev() {
     let mut rng = rand::thread_rng();
@@ -75,7 +74,7 @@ fn test_regev() {
         assert_eq!(a, m);
     }
 }
-*/
+
 #[test]
 fn test_egcd() {
     let a = (240 as u8).to_bigint().unwrap();
