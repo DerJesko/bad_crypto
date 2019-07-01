@@ -99,6 +99,12 @@ impl Add for Matrix {
     }
 }
 
+impl fmt::Display for Matrix {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.m)
+    }
+}
+
 impl Matrix {
     pub fn dot(&self, b: &Matrix) -> Matrix {
         let result = self.m.dot(&b.m);
@@ -115,7 +121,7 @@ impl Matrix {
     }
 
     pub fn to_number(&self) -> Option<usize> {
-        if self.m.len() == 0 {
+        if self.m.len() == 1 {
             return Some(self.m[[0, 0]]);
         }
         None

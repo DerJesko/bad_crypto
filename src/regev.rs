@@ -37,12 +37,14 @@ pub struct SecretKey(Matrix, PublicKey);
 impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev {
     fn key_generation(sec_param: usize, rng: &mut ThreadRng) -> (PublicKey, SecretKey) {
         let q = random_prime_in_range(sec_param, N * N, 2 * N * N, rng);
-        println!("{}", q);
+        println!("q: {}", q);
         let field = Rc::new(Ring::new(q));
         let distribution_limit = (q / (4 * M)) - 1;
+        println!("distribution limit: {}", distribution_limit);
         #[allow(non_snake_case)]
         let A = Matrix::rand_new_of_shape(N, M, field.clone(), rng);
-        let s = Matrix::rand_new_of_shape(N, 1, field.clone(), rng);
+        println!("A: {}", A);
+        let s = Matrix::rand_new_of_shape(1, N, field.clone(), rng);
         let e = Matrix::new(
             Array::from_shape_fn((M, 1).f(), |_| {
                 (chi(distribution_limit as u64, rng) + distribution_limit as isize) as usize
