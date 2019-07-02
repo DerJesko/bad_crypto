@@ -59,7 +59,7 @@ impl Sub for &Matrix {
             ),
         };
         Matrix {
-            m: (&self.m + ring.order) - &b.m,
+            m: ((&self.m + ring.order) - &b.m) % ring.order,
             field: ring,
         }
     }
