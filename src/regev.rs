@@ -39,9 +39,9 @@ pub struct SecretKey(Matrix, PublicKey);
 
 impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev {
     fn key_generation(sec_param: usize, rng: &mut ThreadRng) -> (PublicKey, SecretKey) {
-        let n = sec_param;
+        let n = sec_param * 50;
         let q = random_prime_in_range(sec_param, n * n, 2 * n * n, rng);
-        let m = 2 * (n + 1) * num_bits(q);
+        let m = 2 * sec_param + (n + 1) * num_bits(q);
         let field = Rc::new(Ring::new(q));
         let distribution_limit = (q / (4 * m)) - 1;
         #[allow(non_snake_case)]
