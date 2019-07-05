@@ -80,7 +80,7 @@ impl Add for &Matrix {
         let result = &self.m + &b.m;
         match ring::Ring::unify(&self.field, &b.field) {
             Some(f) => Matrix {
-                m: result,
+                m: result % f.order,
                 field: f,
             },
             None => panic!(
@@ -110,7 +110,7 @@ impl Matrix {
         let result = self.m.dot(&b.m);
         match ring::Ring::unify(&self.field, &b.field) {
             Some(f) => Matrix {
-                m: result,
+                m: result % f.order,
                 field: f,
             },
             None => panic!(

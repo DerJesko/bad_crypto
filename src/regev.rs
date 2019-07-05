@@ -7,8 +7,9 @@ use rand::distributions::Binomial;
 use rand::prelude::*;
 use std::rc::Rc;
 
-const M: usize = 5;
-const N: usize = 7;
+fn num_bits(x: usize) -> usize {
+    (std::mem::size_of::<usize>() * 8) - (x.leading_zeros() as usize)
+}
 
 fn chi(b: u64, rng: &mut ThreadRng) -> isize {
     let distribution = Binomial::new(b * 2 - 1, 0.5);
@@ -21,6 +22,8 @@ pub struct Regev();
 #[allow(non_snake_case)]
 #[derive(Clone)]
 pub struct PublicKey {
+    m: usize,
+    n: usize,
     A: Matrix,
     b: Matrix,
     field: Rc<Ring>,
@@ -36,30 +39,29 @@ pub struct SecretKey(Matrix, PublicKey);
 
 impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Regev {
     fn key_generation(sec_param: usize, rng: &mut ThreadRng) -> (PublicKey, SecretKey) {
-        let q = random_prime_in_range(sec_param, N * N, 2 * N * N, rng);
-        println!("q: {}", q);
+        let n = sec_param;
+        let q = random_prime_in_range(sec_param, n * n, 2 * n * n, rng);
+        let m = 2 * (n + 1) * num_bits(q);
         let field = Rc::new(Ring::new(q));
-        let distribution_limit = (q / (4 * M)) - 1;
-        println!("distribution limit: {}", distribution_limit);
+        let distribution_limit = (q / (4 * m)) - 1;
         #[allow(non_snake_case)]
-        let A = Matrix::rand_new_of_shape(N, M, field.clone(), rng);
-        println!("A: {}", A);
-        let s = Matrix::rand_new_of_shape(1, N, field.clone(), rng);
+        let A = Matrix::rand_new_of_shape(n, m, field.clone(), rng);
+        let s = Matrix::rand_new_of_shape(1, n, field.clone(), rng);
         let e = Matrix::new(
-            Array::from_shape_fn((M, 1).f(), |_| {
+            Array::from_shape_fn((m, 1).f(), |_| {
                 (chi(distribution_limit as u64, rng) + distribution_limit as isize) as usize
             }),
             field.clone(),
         );
         let b = Matrix::dot(&A, &s) + e;
-        let pk = PublicKey { A, b, field };
+        let pk = PublicKey { m, n, A, b, field };
         (pk.clone(), SecretKey(s, pk))
     }
 
     fn encrypt(pub_key: &PublicKey, message: &Message, rng: &mut ThreadRng) -> Ciphertext {
         let Message(mu) = message;
         let x = Matrix::new(
-            Array::from_shape_fn((1, M).f(), |_| if rng.gen() { 1 } else { 0 }),
+            Array::from_shape_fn((1, pub_key.m).f(), |_| if rng.gen() { 1 } else { 0 }),
             pub_key.field.clone(),
         );
         let enc_mu = Matrix::new(
