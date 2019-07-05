@@ -1,15 +1,11 @@
 use crate::matrix::Matrix;
 use crate::ring::Ring;
 use crate::small_prime::random_prime_in_range;
-use crate::traits;
+use crate::{traits, num_bits};
 use ndarray::{Array, ShapeBuilder};
 use rand::distributions::Binomial;
 use rand::prelude::*;
 use std::rc::Rc;
-
-fn num_bits(x: usize) -> usize {
-    (std::mem::size_of::<usize>() * 8) - (x.leading_zeros() as usize)
-}
 
 fn chi(b: u64, rng: &mut ThreadRng) -> isize {
     let distribution = Binomial::new(b * 2 - 1, 0.5);

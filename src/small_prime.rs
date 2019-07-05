@@ -61,15 +61,3 @@ fn div_by_pow_2(n: usize) -> (usize, usize) {
     }
     (i, n1)
 }
-
-pub fn gcd(a: usize, b: usize) -> usize {
-    if Zero::is_zero(&a) {
-        b
-    } else {
-        gcd(b % a, a)
-    }
-}
-
-pub fn lcm(a: usize, b: usize) -> usize {
-    (a * b) / gcd(a, b)
-}
