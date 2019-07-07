@@ -23,7 +23,7 @@ pub fn prime_eh(n: usize, amount_checks: usize, rng: &mut ThreadRng) -> bool {
     let (exponent, factor) = div_by_pow_2(n - 1);
     'witness: for _ in 0..amount_checks {
         let a = rng.gen_range(2, n - 2);
-        let mut x = modpow(a, factor, n); //TODO modpow
+        let mut x = modpow(a, factor, n);
         if !(One::is_one(&x) || x == n - 1) {
             for _ in 1..(exponent - (1 as usize)) {
                 x = x.pow(2) % n;

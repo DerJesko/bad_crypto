@@ -1,17 +1,10 @@
 use crate::matrix::Matrix;
 use crate::ring::Ring;
 use crate::small_prime::random_prime_in_range;
-use crate::{traits, num_bits};
+use crate::{traits, num_bits, chi};
 use ndarray::{Array, ShapeBuilder};
-use rand::distributions::Binomial;
 use rand::prelude::*;
 use std::rc::Rc;
-
-fn chi(b: u64, rng: &mut ThreadRng) -> isize {
-    let distribution = Binomial::new(b * 2 - 1, 0.5);
-    let r = rng.sample(distribution);
-    (r as isize) - (b as isize) + 1
-}
 
 pub struct Regev();
 

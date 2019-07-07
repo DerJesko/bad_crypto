@@ -10,6 +10,7 @@ pub mod elgamal;
 mod groups;
 mod matrix;
 mod prime;
+pub mod packed_regev;
 pub mod regev;
 mod ring;
 pub mod rsa;
@@ -20,6 +21,8 @@ mod traits;
 mod tests;
 
 use num_bigint::{BigUint, ToBigUint};
+use rand::distributions::Binomial;
+use rand::prelude::*;
 
 #[allow(non_snake_case)]
 pub(crate) fn TWO() -> BigUint {
@@ -28,4 +31,10 @@ pub(crate) fn TWO() -> BigUint {
 
 pub(crate) fn num_bits(x: usize) -> usize {
     (std::mem::size_of::<usize>() * 8) - (x.leading_zeros() as usize)
+}
+
+pub(crate) fn chi(b: u64, rng: &mut ThreadRng) -> isize {
+    let distribution = Binomial::new(b * 2 - 1, 0.5);
+    let r = rng.sample(distribution);
+    (r as isize) - (b as isize) + 1
 }
