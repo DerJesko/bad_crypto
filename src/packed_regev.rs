@@ -9,7 +9,7 @@ use std::rc::Rc;
 fn G(index: usize,l:usize ,k: usize, ring: Rc<Ring>) -> Matrix {
     let mut a = Array::zeros((l,k));
     for i in 0..k {
-        a[[i, index]] = (2usize).pow(i as u32);
+        a[[index, i]] = (2usize).pow(i as u32);
     }
     Matrix::new(a, ring)
 }
@@ -54,17 +54,17 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Packe
         let m = 2 * sec_param + (n + 1) * k;
         let ring = Rc::new(Ring::new(q));
         let distribution_limit = 1; // TODO tmp
-        let l = n; // TODO
+        let l = sec_param; // TODO
         #[allow(non_snake_case)]
-        let A = Matrix::rand_new_of_shape(n, m, ring.clone(), rng);
-        let s = Matrix::rand_new_of_shape(l, n, ring.clone(), rng);
+        let A = Matrix::rand_new_of_shape(m, n, ring.clone(), rng);
+        let s = Matrix::rand_new_of_shape(n, l, ring.clone(), rng);
         let e = Matrix::new(
-            Array::from_shape_fn((m, l).f(), |_| {
+            Array::from_shape_fn((l, m).f(), |_| {
                 (chi(distribution_limit as u64, rng) + distribution_limit as isize) as usize
             }),
             ring.clone(),
         );
-        let b = Matrix::dot(&A, &s) + e;
+        let b = Matrix::dot(&s, &A) + e;
         let pk = PublicKey { m, n, A, b, l, k, ring };
         (pk.clone(), SecretKey(s, pk))
     }
@@ -72,12 +72,13 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Packe
     fn encrypt(pub_key: &PublicKey, message: &Message, rng: &mut ThreadRng) -> Ciphertext {
         let Message(m) = message;
         let r = Matrix::new(
-            Array::from_shape_fn((pub_key.k, pub_key.m).f(), |_| if rng.gen() { 1 } else { 0 }),
+            Array::from_shape_fn((pub_key.m, pub_key.k).f(), |_| if rng.gen() { 1 } else { 0 }),
             pub_key.ring.clone(),
         );
         let c1 = Matrix::dot(&pub_key.A, &r);
         let mut c2 = Matrix::dot(&pub_key.b, &r);
-        for i in 0..pub_key.k {
+        println!("l: {}", pub_key.l);
+        for i in 0..pub_key.l {
             if m[i]{
             c2 = c2 + G(i,pub_key.l, pub_key.k, pub_key.ring.clone());
             }
@@ -90,8 +91,10 @@ impl traits::PubKEncryption<PublicKey, SecretKey, Message, Ciphertext> for Packe
         _: &mut ThreadRng,
     ) -> Option<Message> {
         let Ciphertext(c1, c2) = cipher_text;
-        let SecretKey(s,_) =sec_key;
+        let SecretKey(s,pk) =sec_key;
         let decryption = c2 - &Matrix::dot(&s, &c1);
-        panic!();
+        println!("v: {:?}", decryption);
+        let v = decryption.to_vec().unwrap().iter().map(|x| ((*x as isize) - pk.ring.order as isize / 2).abs() < pk.ring.order as isize / 4).collect();
+        Some(Message(v))
     }
 }

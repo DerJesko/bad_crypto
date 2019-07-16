@@ -3,7 +3,7 @@ use crate::matrix::Matrix;
 use crate::prime::{extended_gcd, random_prime};
 use crate::ring::Ring;
 use crate::traits::PubKEncryption;
-use crate::{elgamal, regev, rsa};
+use crate::{elgamal, regev, rsa, packed_regev};
 //use ndarray::arr2;
 use num_bigint::{ToBigInt, ToBigUint};
 //use num_traits::{One, Zero};
@@ -70,6 +70,19 @@ fn test_regev() {
         let a = regev::Message(rng.gen());
         let c = regev::Regev::encrypt(&pk, &a, &mut rng);
         let m = regev::Regev::decrypt(&sk, &c, &mut rng).unwrap();
+        println!("{:?}", m);
+        assert_eq!(a, m);
+    }
+}
+
+#[test]
+fn test_packed_regev() {
+    let mut rng = rand::thread_rng();
+    for _ in 0..5 {
+        let (pk, sk) = packed_regev::PackedRegev::key_generation(2, &mut rng);
+        let a = packed_regev::Message(vec![true, false]);
+        let c = packed_regev::PackedRegev::encrypt(&pk, &a, &mut rng);
+        let m = packed_regev::PackedRegev::decrypt(&sk, &c, &mut rng).unwrap();
         println!("{:?}", m);
         assert_eq!(a, m);
     }

@@ -1,5 +1,5 @@
 use crate::ring;
-use ndarray::{Array, Array2, ShapeBuilder};
+use ndarray::{Array, Array2, ShapeBuilder,Axis};
 use rand::prelude::ThreadRng;
 use rand::Rng;
 use std::fmt;
@@ -123,6 +123,17 @@ impl Matrix {
     pub fn to_number(&self) -> Option<usize> {
         if self.m.len() == 1 {
             return Some(self.m[[0, 0]]);
+        }
+        None
+    }
+
+    pub fn to_vec(&self) -> Option<Vec<usize>> {
+        if self.m.len_of(Axis(0)) == 1 {
+            let mut v = vec![];
+            for i in 0..self.m.len_of(Axis(1)) {
+                v.push(self.m[[0,i]]);
+            }
+            return Some(v);
         }
         None
     }
