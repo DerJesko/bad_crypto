@@ -1,5 +1,5 @@
 use crate::ring;
-use ndarray::{Array, Array2, ShapeBuilder,Axis};
+use ndarray::{Array, Array2, Axis, ShapeBuilder};
 use rand::prelude::ThreadRng;
 use rand::Rng;
 use std::fmt;
@@ -31,7 +31,7 @@ impl Matrix {
         rng: &mut ThreadRng,
     ) -> Self {
         Matrix {
-            m: Array::from_shape_fn((columns, rows).f(), |_| rng.gen_range(0, &field.order)),
+            m: Array::from_shape_fn((columns, rows).f(), |_| rng.gen_range(0, field.order)),
             field: field.clone(),
         }
     }
@@ -131,7 +131,7 @@ impl Matrix {
         if self.m.len_of(Axis(0)) == 1 {
             let mut v = vec![];
             for i in 0..self.m.len_of(Axis(1)) {
-                v.push(self.m[[0,i]]);
+                v.push(self.m[[0, i]]);
             }
             return Some(v);
         }

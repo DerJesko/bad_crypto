@@ -5,11 +5,10 @@ authors = ["Jesko Dujmovic <jeskod+git@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-rand = "0.6.4"
+rand = "0.7.3"
+rand_distr = "0.2.2"
 num-traits = "0.2.6"
-ndarray = "0.12.1"
-num-integer = "0.1"
-
-[dependencies.num-bigint]
-version = "0.2"
-features = ["rand"]
+ndarray = { version = "0.13.1" }
+num-integer = "0.1.43"
+ndarray-rand = "0.11.0"
+num-bigint = { version = "0.3", features = ["rand"]}

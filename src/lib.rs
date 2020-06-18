@@ -6,23 +6,21 @@ extern crate num_integer;
 extern crate num_traits;
 extern crate rand;
 
+pub mod batched_regev;
+mod distributions;
 pub mod elgamal;
 mod groups;
 mod matrix;
 mod prime;
-pub mod packed_regev;
-pub mod regev;
+mod rabin;
 mod ring;
 pub mod rsa;
 mod small_prime;
 mod traits;
 
-#[cfg(test)]
-mod tests;
-
 use num_bigint::{BigUint, ToBigUint};
-use rand::distributions::Binomial;
 use rand::prelude::*;
+use rand_distr::Binomial;
 
 #[allow(non_snake_case)]
 pub(crate) fn TWO() -> BigUint {
@@ -34,7 +32,7 @@ pub(crate) fn num_bits(x: usize) -> usize {
 }
 
 pub(crate) fn chi(b: u64, rng: &mut ThreadRng) -> isize {
-    let distribution = Binomial::new(b * 2 - 1, 0.5);
+    let distribution = Binomial::new(b * 2 - 1, 0.5).unwrap();
     let r = rng.sample(distribution);
     (r as isize) - (b as isize) + 1
 }

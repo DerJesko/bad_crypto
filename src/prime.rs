@@ -8,7 +8,7 @@ pub fn random_prime(sec_param: usize, rng: &mut ThreadRng) -> BigUint {
     let two = TWO();
     let one: BigUint = One::one();
     loop {
-        res = (rng.gen_biguint(sec_param) * &two) + &one;
+        res = (rng.gen_biguint(sec_param as u64) * &two) + &one;
         if prime_eh(&res, sec_param, rng) {
             return res;
         }
