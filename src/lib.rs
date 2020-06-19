@@ -6,11 +6,11 @@ extern crate num_integer;
 extern crate num_traits;
 extern crate rand;
 
-pub mod batched_regev;
 mod distributions;
 pub mod elgamal;
 mod groups;
 mod matrix;
+pub mod packed_regev;
 mod prime;
 mod rabin;
 mod ring;

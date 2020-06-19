@@ -3,6 +3,10 @@ use ndarray::{arr1, Array1, Array2, Axis};
 use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 
+fn round_between_modulus(x: usize, input_modulus: usize, output_modulus: usize) -> usize {
+    ((((x * output_modulus) as f64) / (input_modulus as f64)).round() as usize) % output_modulus
+}
+
 pub struct BatchedRegev {
     lattice_row: usize,
     lattice_column: usize,
@@ -21,6 +25,9 @@ pub struct PublicKey {
 #[derive(Debug)]
 pub struct Ciphertext(Array2<usize>, Array2<usize>);
 
+#[derive(Debug)]
+pub struct ShrunkCiphertext(Array2<usize>, usize, Array2<usize>);
+
 #[derive(PartialEq, Debug)]
 pub struct Message(Array1<usize>);
 
@@ -31,7 +38,7 @@ impl BatchedRegev {
         BatchedRegev {
             lattice_row: 6,
             lattice_column: 4,
-            lattice_modulus: 200,
+            lattice_modulus: sec_param,
             distribution_bound: 5,
             num_messages: 5,
             message_modulus: 3,
@@ -73,6 +80,47 @@ impl BatchedRegev {
         Ciphertext(c1, c2)
     }
 
+    pub fn shrink_ciphertext(&self, cipher_text: &Ciphertext) -> ShrunkCiphertext {
+        let mut forbidden_zone = Vec::new();
+        for c2 in cipher_text.1.iter() {
+            for i in 0..self.message_modulus {
+                let forbidden_value = ((self.lattice_modulus * 2 * i) / (2 * self.message_modulus))
+                    + self.lattice_modulus
+                    - c2;
+                forbidden_zone.push((
+                    (forbidden_value - self.distribution_bound) % self.lattice_modulus,
+                    (forbidden_value + self.distribution_bound) % self.lattice_modulus,
+                ))
+            }
+        }
+        forbidden_zone.sort();
+        let mut r = forbidden_zone[0].1 + 1;
+        for (start, end) in forbidden_zone {
+            if r < start {
+                break;
+            }
+            r = end + 1;
+        }
+        ShrunkCiphertext(
+            cipher_text.0.clone(),
+            r,
+            cipher_text
+                .1
+                .mapv(|x| round_between_modulus(x, self.lattice_modulus, self.message_modulus)),
+        )
+    }
+
+    pub fn unshrink_ciphertext(&self, shrunk_cipher_text: &ShrunkCiphertext) -> Ciphertext {
+        Ciphertext(
+            shrunk_cipher_text.0.clone(),
+            shrunk_cipher_text.2.mapv(|x| {
+                (round_between_modulus(x, self.message_modulus, self.lattice_modulus)
+                    + shrunk_cipher_text.1)
+                    % self.lattice_modulus
+            }),
+        )
+    }
+
     pub fn decrypt(&self, sec_key: &SecretKey, cipher_text: &Ciphertext) -> Option<Message> {
         let Ciphertext(c1, c2) = cipher_text;
         let SecretKey(secret, _) = sec_key;
@@ -80,21 +128,36 @@ impl BatchedRegev {
             ((Array2::<usize>::zeros((1, self.num_messages)) + self.lattice_modulus) + c2.clone()
                 - (c1.dot(secret) % self.lattice_modulus))
                 % self.lattice_modulus;
-        let decryption = (linear_decryption.index_axis_move(Axis(0), 0)).mapv(|x| {
-            ((((x * self.message_modulus) as f64) / (self.lattice_modulus as f64)).round() as usize)
-                % self.message_modulus
-        });
+        let decryption = (linear_decryption.index_axis_move(Axis(0), 0))
+            .mapv(|x| round_between_modulus(x, self.lattice_modulus, self.message_modulus));
         Some(Message(decryption))
     }
 }
 
 #[test]
-fn test1() {
+fn test_basic_functions() {
     let reg = BatchedRegev::new(128, 1);
     let (pk, sk) = reg.key_generation();
     for i in 0..3 {
-        let c = reg.encrypt(&pk, &Message(arr1(&[i; 5])));
-        let d = reg.decrypt(&sk, &c);
-        println!("{:?}", d)
+        let message = Message(arr1(&[i; 5]));
+        let cipher_text = reg.encrypt(&pk, &message);
+        let decrypted_value = reg.decrypt(&sk, &cipher_text).unwrap();
+        assert_eq!(message, decrypted_value)
+    }
+}
+
+#[test]
+fn test_shrink() {
+    let reg = BatchedRegev::new(128, 1);
+    let (pk, sk) = reg.key_generation();
+    for i in 0..3 {
+        let message = Message(arr1(&[i; 5]));
+        let cipher_text = reg.encrypt(&pk, &message);
+        let shrunk_cipher_text = reg.shrink_ciphertext(&cipher_text);
+        let unshrunk_cipher_text = reg.unshrink_ciphertext(&shrunk_cipher_text);
+        println!("c1:{:?}", cipher_text.1);
+        println!("c2:{:?}", unshrunk_cipher_text.1);
+        let decrypted_value = reg.decrypt(&sk, &unshrunk_cipher_text).unwrap();
+        assert_eq!(message, decrypted_value)
     }
 }
